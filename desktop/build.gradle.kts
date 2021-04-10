@@ -6,7 +6,7 @@ plugins {
     id("org.jetbrains.compose") version "0.3.1"
 }
 
-group = "me.tom"
+group = "com.flannaghan.cheetah"
 version = "1.0"
 
 kotlin {

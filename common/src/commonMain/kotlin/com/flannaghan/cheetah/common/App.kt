@@ -1,4 +1,4 @@
-package me.tom.common
+package com.flannaghan.cheetah.common
 import androidx.compose.material.Text
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme

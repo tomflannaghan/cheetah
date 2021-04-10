@@ -7,7 +7,7 @@ plugins {
     id("kotlin-android-extensions")
 }
 
-group = "me.tom"
+group = "com.flannaghan.cheetah"
 version = "1.0"
 
 repositories {
