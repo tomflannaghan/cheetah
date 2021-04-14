@@ -32,7 +32,13 @@ kotlin {
                 api(compose.material)
             }
         }
-        val commonTest by getting
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test-junit5"))
+                implementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
+                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+            }
+        }
         val androidMain by getting {
             dependencies {
                 api("androidx.appcompat:appcompat:1.3.0-rc01")
