@@ -8,6 +8,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.flannaghan.cheetah.common.gui.SearchableWordList
 
 @Composable
 fun App(context: ApplicationContext) {
@@ -19,7 +20,7 @@ fun App(context: ApplicationContext) {
             }) {
                 Text(text)
             }
-            WordList(wordSources(context)[0].words)
+            SearchableWordList(wordSources(context)[0].words)
         }
     }
 }
