@@ -19,7 +19,6 @@ fun App(context: ApplicationContext) {
             }) {
                 Text(text)
             }
-            Text(context.openFile("data.txt").bufferedReader().readText())
             WordList(wordSources(context)[0].words)
         }
     }
