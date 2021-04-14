@@ -70,5 +70,3 @@ android {
         targetSdkVersion(29)
     }
 }
-dependencies {
-}

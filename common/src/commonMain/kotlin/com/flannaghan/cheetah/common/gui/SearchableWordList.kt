@@ -15,6 +15,6 @@ fun SearchableWordList(words: List<Word>) {
     Column {
         TextField(textState.value, onValueChange = { textState.value = it })
         val prefix = stringToEntry(textState.value)
-        WordList(words.filter{it.entry.startsWith(prefix)})
+        WordList(words.filter { it.entry.startsWith(prefix) })
     }
 }
