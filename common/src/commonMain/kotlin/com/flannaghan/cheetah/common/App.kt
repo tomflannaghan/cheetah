@@ -20,6 +20,7 @@ fun App(context: ApplicationContext) {
                 Text(text)
             }
             Text(context.openFile("data.txt").bufferedReader().readText())
+            WordList(context.openFile("UKACD17.txt").reader(Charsets.UTF_8).readLines().map { it.trim() })
         }
     }
 }
