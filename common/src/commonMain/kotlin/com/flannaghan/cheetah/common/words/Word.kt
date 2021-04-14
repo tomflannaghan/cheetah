@@ -10,13 +10,16 @@ data class Word(val string: String, val entry: String) {
     constructor(string: String) : this(string, stringToEntry(string))
 }
 
+private val LETTER_REGEX = Regex("[^\\p{L}]")
+private val AZ_REGEX = Regex("^[A-Z]*$")
+
 fun stringToEntry(string: String): String {
     val entry = Normalizer.normalize(string, Normalizer.Form.NFKD)
-        .replace(Regex("[^\\p{L}]"), "")
+        .replace(LETTER_REGEX, "")
         .toUpperCase(Locale.ROOT)
         // There are some cases that need handling specially:
         .replace("Ø", "O")
-    require(Regex("^[A-Z]*$").matches(entry)) {
+    require(AZ_REGEX.matches(entry)) {
         "$string unsuccessfully normalised to $entry"
     }
     return entry
