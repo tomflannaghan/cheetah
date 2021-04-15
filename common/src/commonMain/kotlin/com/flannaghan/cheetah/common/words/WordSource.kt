@@ -8,6 +8,8 @@ interface WordSource {
 }
 
 
-class FileWordSource(override val name: String, reader: InputStreamReader) : WordSource {
-    override val words = reader.readLines().map { Word(it.trim()) }
+class FileWordSource(override val name: String, private val reader: InputStreamReader) : WordSource {
+    override val words: List<Word> by lazy {
+        reader.readLines().map { Word(it.trim()) }
+    }
 }

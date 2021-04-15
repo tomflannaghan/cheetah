@@ -37,12 +37,14 @@ kotlin {
                 implementation(kotlin("test-junit5"))
                 implementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
                 runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
             }
         }
         val androidMain by getting {
             dependencies {
                 api("androidx.appcompat:appcompat:1.3.0-rc01")
                 api("androidx.core:core-ktx:1.3.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3")
             }
         }
         val androidTest by getting {
