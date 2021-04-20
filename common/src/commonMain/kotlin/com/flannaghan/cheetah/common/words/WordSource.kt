@@ -10,6 +10,6 @@ interface WordSource {
 
 class FileWordSource(override val name: String, private val reader: InputStreamReader) : WordSource {
     override val words: List<Word> by lazy {
-        reader.readLines().map { Word(it.trim()) }
+        reader.buffered().readLines().map { Word(it.trim()) }
     }
 }
