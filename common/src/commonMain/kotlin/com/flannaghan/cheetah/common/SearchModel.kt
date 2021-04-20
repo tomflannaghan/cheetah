@@ -27,8 +27,6 @@ abstract class SearchModel {
         if (query == currentJobQuery) return@coroutineScope
         // Throw out the old job.
         currentJob?.cancel()
-
-        updateQuery(query)
         currentJob = launch {
             val newResult = withContext(backgroundContext()) {
                 search(wordSources, query)
