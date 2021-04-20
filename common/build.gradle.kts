@@ -45,6 +45,8 @@ kotlin {
                 api("androidx.appcompat:appcompat:1.3.0-rc01")
                 api("androidx.core:core-ktx:1.3.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3")
+                implementation("androidx.compose.runtime:runtime-livedata:1.0.0-beta04")
+
             }
         }
         val androidTest by getting {

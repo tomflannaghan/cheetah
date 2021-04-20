@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.flannaghan.cheetah.common.gui.SearchableWordList
 
 @Composable
-fun App(context: ApplicationContext, searcher: Searcher) {
+fun App(searchModel: SearchModel) {
     var text by remember { mutableStateOf("Hello, World!") }
     MaterialTheme {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -20,7 +20,7 @@ fun App(context: ApplicationContext, searcher: Searcher) {
             }) {
                 Text(text)
             }
-            SearchableWordList(searcher)
+            SearchableWordList(searchModel)
         }
     }
 }
