@@ -7,7 +7,6 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import com.flannaghan.cheetah.common.SearchModel
-import com.flannaghan.cheetah.common.WordList
 import kotlinx.coroutines.launch
 
 @Composable
@@ -22,7 +21,7 @@ fun SearchableWordList(searchModel: SearchModel) {
 
         val scope = rememberCoroutineScope()
         TextField(
-            searchModel.queryState().value ?: "",
+            searchModel.queryState().value,
             onValueChange = { scope.launch { searchModel.doSearch(it) } },
             colors = colors
         )

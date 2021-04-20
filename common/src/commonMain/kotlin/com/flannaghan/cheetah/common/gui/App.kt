@@ -1,4 +1,4 @@
-package com.flannaghan.cheetah.common
+package com.flannaghan.cheetah.common.gui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -8,7 +8,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.flannaghan.cheetah.common.gui.SearchableWordList
+import com.flannaghan.cheetah.common.SearchModel
+import com.flannaghan.cheetah.common.getPlatformName
 
 @Composable
 fun App(searchModel: SearchModel) {

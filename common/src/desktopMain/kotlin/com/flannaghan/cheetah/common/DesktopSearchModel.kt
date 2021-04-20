@@ -5,8 +5,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 
 class DesktopSearchModel : SearchModel() {
-    private val _queryState = mutableStateOf<String>("")
-    private val _resultState = mutableStateOf<SearchResult>(SearchResult(true, "", listOf()))
+    private val _queryState = mutableStateOf("")
+    private val _resultState = mutableStateOf(SearchResult(true, "", listOf()))
 
     @Composable
     override fun queryState(): State<String> = _queryState

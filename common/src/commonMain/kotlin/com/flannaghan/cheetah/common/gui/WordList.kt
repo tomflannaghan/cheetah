@@ -1,4 +1,4 @@
-package com.flannaghan.cheetah.common
+package com.flannaghan.cheetah.common.gui
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
