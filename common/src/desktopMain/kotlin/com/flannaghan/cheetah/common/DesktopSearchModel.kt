@@ -1,5 +1,6 @@
 package com.flannaghan.cheetah.common
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 
@@ -7,8 +8,10 @@ class DesktopSearchModel : SearchModel() {
     private val _queryState = mutableStateOf<String>("")
     private val _resultState = mutableStateOf<SearchResult>(SearchResult(true, "", listOf()))
 
+    @Composable
     override fun queryState(): State<String> = _queryState
 
+    @Composable
     override fun resultState(): State<SearchResult> = _resultState
 
     override fun updateQuery(query: String) {
