@@ -7,4 +7,4 @@ actual fun getPlatformName(): String {
     return "Desktop"
 }
 
-actual fun backgroundContext(): CoroutineContext = Dispatchers.IO
+actual fun backgroundContext(): CoroutineContext = Dispatchers.Default

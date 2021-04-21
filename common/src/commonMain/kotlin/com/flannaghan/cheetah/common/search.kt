@@ -1,29 +1,29 @@
 package com.flannaghan.cheetah.common
 
 import com.flannaghan.cheetah.common.words.Word
-import com.flannaghan.cheetah.common.words.WordSource
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.util.*
 
 data class SearchResult(val success: Boolean, val query: String, val words: List<Word>)
 
-suspend fun search(wordSources: List<WordSource>, query: String): SearchResult {
+suspend fun search(words: List<Word>, query: String): SearchResult = coroutineScope {
     val matches = mutableListOf<Word>()
     var success = false
     try {
-        val words = wordSources.flatMap { it.words }.toSet().toList()
-        yield()
-
         val regex = Regex(query.toUpperCase(Locale.ROOT))
-        for (wordChunk in words.chunked(1000)) {
-            matches.addAll(wordChunk.filter { regex.matches(it.entry) })
-            yield()
+        words.chunked(1000).map {
+            async { it.filter { word -> regex.matches(word.entry) } }
+        }.awaitAll().forEach {
+            matches.addAll(it)
         }
-        yield()
+
         success = true
 
     } catch (e: Exception) {
         matches.clear()
     }
-    return SearchResult(success, query, matches)
+
+    SearchResult(success, query, matches)
 }

@@ -2,6 +2,7 @@ package com.flannaghan.cheetah.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import com.flannaghan.cheetah.common.words.Word
 import com.flannaghan.cheetah.common.words.WordSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -16,6 +17,13 @@ abstract class SearchModel {
     abstract fun resultState(): State<SearchResult>
 
     var wordSources: List<WordSource> = listOf()
+    private var _allWords: List<Word>? = null
+    val allWords: List<Word>
+        get() {
+            val result = _allWords ?: wordSources.flatMap { it.words }.toSet().toList()
+            _allWords = result
+            return result
+        }
 
     abstract fun updateQuery(query: String)
     abstract fun updateResult(result: SearchResult)
@@ -29,7 +37,7 @@ abstract class SearchModel {
         currentJob?.cancel()
         currentJob = launch {
             val newResult = withContext(backgroundContext()) {
-                search(wordSources, query)
+                search(allWords, query)
             }
             updateResult(newResult)
         }
