@@ -22,4 +22,9 @@ internal class WordKtTest {
         )
         assertEquals(expected, stringToWords(expected.joinToString("\n") { it.string }))
     }
+
+    @Test
+    fun stringToWordsBlanks() {
+        assertEquals(listOf<Word>(), stringToWords("\n\n\n"))
+    }
 }

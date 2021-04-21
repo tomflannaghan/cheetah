@@ -34,5 +34,5 @@ fun stringToWords(string: String): List<Word> {
         .split("\n")
     val words = string.split("\n")
     require(words.size == entries.size)
-    return words.zip(entries).map { Word(it.first, it.second) }
+    return words.zip(entries).filter { it.second != "" }.map { Word(it.first, it.second) }
 }
