@@ -7,9 +7,13 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 @Composable
 fun ProgressTextField(
@@ -19,10 +23,16 @@ fun ProgressTextField(
     isBusy: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions()
 ) {
+    val showProgressIndicator = remember { mutableStateOf(false) }
     val colors = if (isError)
         TextFieldDefaults.textFieldColors(MaterialTheme.colors.error)
     else
         TextFieldDefaults.textFieldColors()
+
+    LaunchedEffect(isBusy) {
+        if (isBusy) delay(1000)
+        showProgressIndicator.value = isBusy
+    }
 
     Box {
         Row {
@@ -39,7 +49,7 @@ fun ProgressTextField(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.matchParentSize()
         ) {
-            if (isBusy) {
+            if (showProgressIndicator.value) {
                 CircularProgressIndicator()
             }
             Spacer(modifier = Modifier.width(10.dp))
