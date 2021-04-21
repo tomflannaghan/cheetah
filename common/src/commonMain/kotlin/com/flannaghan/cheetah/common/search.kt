@@ -13,7 +13,7 @@ suspend fun search(words: List<Word>, query: String): SearchResult = coroutineSc
     var success = false
     try {
         val pattern = Regex(query.toUpperCase(Locale.ROOT)).toPattern()
-        words.chunked(1000).map { chunk ->
+        words.chunked(10000).map { chunk ->
             async {
                 val result = mutableListOf<Word>()
                 // Matcher isn't threadsafe so make one for each chunk.
