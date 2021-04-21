@@ -15,7 +15,7 @@ suspend fun search(wordSources: List<WordSource>, query: String): SearchResult {
         yield()
 
         val regex = Regex(query.toUpperCase(Locale.ROOT))
-        for (wordChunk in words.chunked(100)) {
+        for (wordChunk in words.chunked(1000)) {
             matches.addAll(wordChunk.filter { regex.matches(it.entry) })
             yield()
         }
