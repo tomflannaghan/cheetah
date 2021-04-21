@@ -13,7 +13,7 @@ data class Word(val string: String, val entry: String) {
     constructor(string: String) : this(string, stringToEntry(string))
 }
 
-private val LETTER_REGEX = Regex("[^\\p{L}\\n]")
+private val LETTER_REGEX = Regex("[^\\p{L}]")
 
 fun stringToEntry(string: String): String {
     val entry = Normalizer.normalize(string, Normalizer.Form.NFKD)
@@ -28,16 +28,20 @@ fun stringToEntry(string: String): String {
  * Takes a string with a word on each line, and converts them all to word instances. This is more efficient
  * than doing it one word at a time.
  */
-fun stringToWords(string: String): List<Word> {
-    val entries = Normalizer.normalize(string, Normalizer.Form.NFKD)
-        .replace(LETTER_REGEX, "")
-        .toUpperCase(Locale.ROOT)
-        // There are some cases that need handling specially:
-        .replace("Ø", "O")
-        .split("\n")
-    val words = string.split("\n")
-    require(words.size == entries.size)
-    return words.zip(entries).filter { it.second != "" }.map { Word(it.first, it.second) }
+fun stringsToWords(strings: Collection<String>): List<Word> {
+    val matcher = LETTER_REGEX.toPattern().matcher("")
+    val words = mutableListOf<Word>()
+    for (string in strings) {
+        var entry = Normalizer.normalize(string, Normalizer.Form.NFKD)
+            .toUpperCase(Locale.ROOT)
+            .replace("Ø", "O")
+        // Now remove all control characters.
+        matcher.reset(entry)
+        entry = matcher.replaceAll("")
+        if (entry == "") continue
+        words.add(Word(string, entry))
+    }
+    return words
 }
 
 /**
@@ -47,7 +51,7 @@ suspend fun stringsToWordsParallel(strings: Collection<String>): List<Word> = co
     strings
         .chunked(10000)
         .map {
-            async { stringToWords(it.joinToString("\n")) }
+            async { stringsToWords(it) }
         }
         .awaitAll()
         .flatten()

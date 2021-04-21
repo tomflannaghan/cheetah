@@ -13,18 +13,18 @@ internal class WordKtTest {
     }
 
     @Test
-    fun stringToWords() {
+    fun stringsToWords() {
         val expected = listOf(
             Word("hello", "HELLO"),
             Word("après-ski", "APRESSKI"),
             Word("Ardèche", "ARDECHE"),
             Word("a b Ø", "ABO"),
         )
-        assertEquals(expected, stringToWords(expected.joinToString("\n") { it.string }))
+        assertEquals(expected, stringsToWords(expected.map { it.string }))
     }
 
     @Test
-    fun stringToWordsBlanks() {
-        assertEquals(listOf<Word>(), stringToWords("\n\n\n"))
+    fun stringsToWordsBlanks() {
+        assertEquals(listOf<Word>(), stringsToWords(listOf("", "")))
     }
 }
