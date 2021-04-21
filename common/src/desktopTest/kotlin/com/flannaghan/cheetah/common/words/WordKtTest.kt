@@ -1,8 +1,7 @@
 package com.flannaghan.cheetah.common.words
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.text.Normalizer
 
 internal class WordKtTest {
     @Test
@@ -10,8 +9,17 @@ internal class WordKtTest {
         assertEquals("HELLO", stringToEntry("hello"))
         assertEquals("APRESSKI", stringToEntry("après-ski"))
         assertEquals("ARDECHE", stringToEntry("Ardèche"))
-
-        println("Ø".toLowerCase())
         assertEquals("ABO", stringToEntry("a b Ø"))
+    }
+
+    @Test
+    fun stringToWords() {
+        val expected = listOf(
+            Word("hello", "HELLO"),
+            Word("après-ski", "APRESSKI"),
+            Word("Ardèche", "ARDECHE"),
+            Word("a b Ø", "ABO"),
+        )
+        assertEquals(expected, stringToWords(expected.joinToString("\n") { it.string }))
     }
 }
