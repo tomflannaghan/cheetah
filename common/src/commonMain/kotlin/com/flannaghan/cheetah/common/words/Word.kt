@@ -1,5 +1,8 @@
 package com.flannaghan.cheetah.common.words
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.text.Normalizer
 import java.util.*
 
@@ -35,4 +38,17 @@ fun stringToWords(string: String): List<Word> {
     val words = string.split("\n")
     require(words.size == entries.size)
     return words.zip(entries).filter { it.second != "" }.map { Word(it.first, it.second) }
+}
+
+/**
+ * A parallel version of stringToWords.
+ */
+suspend fun stringsToWordsParallel(strings: Collection<String>): List<Word> = coroutineScope {
+    strings
+        .chunked(10000)
+        .map {
+            async { stringToWords(it.joinToString("\n")) }
+        }
+        .awaitAll()
+        .flatten()
 }
