@@ -9,10 +9,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.flannaghan.cheetah.common.SearchModel
+import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.launch
 
 @Composable
-fun SearchableWordList(searchModel: SearchModel) {
+fun SearchableWordList(searchModel: SearchModel, selectedWord: Word?, onWordSelected: (Word?) -> Unit) {
     Column {
         val result = searchModel.resultState().value
         val scope = rememberCoroutineScope()
@@ -21,6 +22,7 @@ fun SearchableWordList(searchModel: SearchModel) {
         ProgressTextField(
             queryText,
             onValueChange = {
+                onWordSelected(null)
                 searchModel.updateQuery(it)
                 scope.launch { searchModel.doSearch(it) }
             },
@@ -33,6 +35,9 @@ fun SearchableWordList(searchModel: SearchModel) {
             isError = !result.success
         )
         Text("${result.words.size} results", style = MaterialTheme.typography.caption)
-        WordList(result.words)
+        WordList(result.words, selectedWord, onClick = {
+            onWordSelected(it)
+        })
     }
 }
+
