@@ -12,16 +12,25 @@ suspend fun search(words: List<Word>, query: String): SearchResult = coroutineSc
     val matches = mutableListOf<Word>()
     var success = false
     try {
-        val regex = Regex(query.toUpperCase(Locale.ROOT))
-        words.chunked(1000).map {
-            async { it.filter { word -> regex.matches(word.entry) } }
+        val pattern = Regex(query.toUpperCase(Locale.ROOT)).toPattern()
+        words.chunked(1000).map { chunk ->
+            async {
+                val result = mutableListOf<Word>()
+                // Matcher isn't threadsafe so make one for each chunk.
+                val matcher = pattern.matcher("")
+                for (word in chunk) {
+                    matcher.reset(word.entry)
+                    if (matcher.matches()) result.add(word)
+                }
+                result
+            }
         }.awaitAll().forEach {
             matches.addAll(it)
         }
-
+        // We succeeded - mark as such.
         success = true
-
     } catch (e: Exception) {
+        // Reset matches. In case of error we report no matches.
         matches.clear()
     }
 
