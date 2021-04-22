@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.compose") version "0.3.1"
     id("com.android.library")
     id("kotlin-android-extensions")
+    id("com.squareup.sqldelight")
 }
 
 group = "com.flannaghan.cheetah"
@@ -30,6 +31,7 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
+                implementation("com.squareup.sqldelight:runtime:1.4.4")
             }
         }
         val commonTest by getting {
@@ -46,6 +48,7 @@ kotlin {
                 api("androidx.core:core-ktx:1.3.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3")
                 implementation("androidx.compose.runtime:runtime-livedata:1.0.0-beta04")
+                implementation("com.squareup.sqldelight:android-driver:1.4.4")
 
             }
         }
@@ -55,7 +58,12 @@ kotlin {
                 implementation("junit:junit:4.13")
             }
         }
-        val desktopMain by getting
+        val desktopMain by getting {
+            dependencies {
+                implementation("com.squareup.sqldelight:sqlite-driver:1.4.4")
+                implementation("org.xerial:sqlite-jdbc:3.30.1")
+            }
+        }
         val desktopTest by getting {
             dependencies {
                 implementation(kotlin("test-junit5"))
@@ -72,5 +80,11 @@ android {
     defaultConfig {
         minSdkVersion(24)
         targetSdkVersion(29)
+    }
+}
+
+sqldelight {
+    database("WordDatabase") {
+        packageName = "com.flannaghan.cheetah.common.db"
     }
 }
