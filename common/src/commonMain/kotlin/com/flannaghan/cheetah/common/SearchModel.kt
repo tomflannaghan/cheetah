@@ -56,11 +56,10 @@ abstract class SearchModel {
         definitionLookupLauncher.launch(this) {
             withContext(backgroundContext()) {
                 val db = getDatabase()
-                println("Searching for ${word.entry}")
-                // TODO make this coroutiney.
-                val definitions = db.definitionQueries.definitionForWord(word.entry).executeAsList()
-                println("Found $definitions")
-                updateDefinition(definitions?.joinToString("\n\n") { it.definition } ?: "")
+                val definitions = db.definitionQueries
+                    .definitionForWord(word.entry)
+                    .executeAsList()
+                updateDefinition(definitions.joinToString("\n\n") { it.definition })
             }
         }
     }
