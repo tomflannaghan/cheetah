@@ -54,13 +54,13 @@ abstract class SearchModel {
 
     suspend fun lookupDefinition(word: Word) = coroutineScope {
         definitionLookupLauncher.launch(this) {
-            withContext(backgroundContext()) {
+            val definitions = withContext(backgroundContext()) {
                 val db = getDatabase()
-                val definitions = db.definitionQueries
+                db.definitionQueries
                     .definitionForWord(word.entry)
                     .executeAsList()
-                updateDefinition(definitions.joinToString("\n\n") { it.definition })
             }
+            updateDefinition(definitions.joinToString("\n\n") { it.definition })
         }
     }
 }
