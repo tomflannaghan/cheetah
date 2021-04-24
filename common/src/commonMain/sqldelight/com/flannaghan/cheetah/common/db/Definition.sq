@@ -1,0 +1,11 @@
+CREATE TABLE definition (
+    id_word INTEGER NOT NULL,
+    rank INTEGER NOT NULL,
+    definition TEXT NOT NULL,
+    definition_words TEXT NOT NULL,
+    PRIMARY KEY (id_word, rank),
+    FOREIGN KEY (id_word) REFERENCES word (id)
+);
+
+insert:
+INSERT INTO definition(id_word, rank, definition, definition_words) VALUES ?;

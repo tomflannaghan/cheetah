@@ -1,0 +1,11 @@
+CREATE TABLE word (
+    id INTEGER NOT NULL PRIMARY KEY,
+    word TEXT NOT NULL,
+    canonical_form TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM word;
+
+selectAllWithLimit:
+SELECT * FROM word LIMIT ?;
