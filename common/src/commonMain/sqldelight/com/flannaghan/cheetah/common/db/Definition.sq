@@ -9,3 +9,8 @@ CREATE TABLE definition (
 
 insert:
 INSERT INTO definition(id_word, rank, definition, definition_words) VALUES ?;
+
+definitionForWord:
+SELECT * FROM definition
+JOIN word ON word.id = definition.id_word
+WHERE word.canonical_form = ?;

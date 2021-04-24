@@ -10,20 +10,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.flannaghan.cheetah.common.SearchModel
 import com.flannaghan.cheetah.common.words.Word
+import kotlinx.coroutines.launch
 
 @Composable
 fun App(searchModel: SearchModel) {
     var selectedWord by remember { mutableStateOf<Word?>(null) }
+    val scope = rememberCoroutineScope()
     MaterialTheme {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(Modifier.weight(1.0f)) {
-                SearchableWordList(searchModel, selectedWord, onWordSelected = {
-                    selectedWord = it
+                SearchableWordList(searchModel, selectedWord, onWordSelected = { word ->
+                    selectedWord = word
+                    searchModel.updateDefinition("")
+                    if (word != null) scope.launch { searchModel.lookupDefinition(word) }
                 })
             }
             if (selectedWord != null) {
                 Row(Modifier.weight(1.0f).padding(top = 10.dp)) {
-                    Text("A definition for $selectedWord")
+                    Text(searchModel.definitionState().value)
                 }
             }
         }
