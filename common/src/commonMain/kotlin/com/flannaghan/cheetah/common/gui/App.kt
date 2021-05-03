@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,10 +24,9 @@ fun App(searchModel: SearchModel) {
                     if (word != null) scope.launch { searchModel.lookupDefinition(word) }
                 })
             }
-            if (selectedWord != null) {
-                Row(Modifier.weight(1.0f).padding(top = 10.dp)) {
-                    Text(searchModel.definitionState().value)
-                }
+
+            Row(Modifier.weight(1.0f).padding(top = 10.dp)) {
+                DefinitionView(searchModel.definitionState().value)
             }
         }
     }
