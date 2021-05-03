@@ -50,7 +50,6 @@ open class DataSourceDecodeError(message: String) : Exception(message)
 
 
 class UnknownTypeDataSourceError(type: String) : DataSourceDecodeError(type)
-class MissingMetadataDataSourceError(type: String) : DataSourceDecodeError(type)
 class FileDataSourceError(type: String) : DataSourceDecodeError(type)
 
 
