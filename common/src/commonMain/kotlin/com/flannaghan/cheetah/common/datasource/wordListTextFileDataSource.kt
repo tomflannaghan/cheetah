@@ -5,7 +5,7 @@ import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.words.Word
 import java.io.File
 
-fun wordListTextFileDataSource(name: String, file: File, color: Color) = DataSource(
+fun wordListTextFileDataSource(name: String, file: File, color: Color, defaults: DataSourceDefaults) = DataSource(
     name,
     object : WordListFetcher {
         override suspend fun getWords(context: ApplicationContext): List<Word> {
@@ -17,5 +17,6 @@ fun wordListTextFileDataSource(name: String, file: File, color: Color) = DataSou
         }
     },
     null,
-    color
+    color,
+    defaults
 )

@@ -5,7 +5,7 @@ import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.words.Word
 import java.io.File
 
-fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color): DataSource {
+fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defaults: DataSourceDefaults): DataSource {
     val path = dbFile.absolutePath
     val wordListFetcher = object : WordListFetcher {
         override suspend fun getWords(context: ApplicationContext): List<Word> {
@@ -22,5 +22,5 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color): Data
                 .joinToString("\n\n") { it.definition }
         }
     }
-    return DataSource(name, wordListFetcher, definitionSearcher, color)
+    return DataSource(name, wordListFetcher, definitionSearcher, color, defaults)
 }

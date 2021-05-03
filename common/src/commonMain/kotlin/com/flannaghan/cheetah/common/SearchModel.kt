@@ -34,7 +34,8 @@ abstract class SearchModel(private val context: ApplicationContext) {
         _allWords?.let { return@coroutineScope it }
         // Otherwise populate in parallel.
         val allWords = dataSources
-            .map { async { it.wordList.getWords(context) } }
+            .filter { it.defaults.useWordList }
+            .map { async { it.wordListFetcher.getWords(context) } }
             .awaitAll()
             .flatten()
             .toSet()
@@ -57,8 +58,8 @@ abstract class SearchModel(private val context: ApplicationContext) {
         definitionLookupLauncher.launch(this) {
             val definitions = withContext(backgroundContext()) {
                 dataSources
-                    .map { it.definitionSearcher }
-                    .filterNotNull()
+                    .filter { it.defaults.useDefinitions }
+                    .mapNotNull { it.definitionSearcher }
                     .map { async { it.lookupDefinition(context, word) } }
                     .awaitAll()
             }

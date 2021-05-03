@@ -13,12 +13,13 @@ internal class SqliteWordDatabaseDataSourceKtTest {
     fun wiktionaryTest() {
         val context = DesktopApplicationContext()
         val file = File(context.dataPath(), "wiktionary.sqlite")
-        val source = sqliteWordDatabaseDataSource("wiktionary", file, Color.Blue)
+        val defaults = DataSourceDefaults(useWordList = true, useDefinitions = true)
+        val source = sqliteWordDatabaseDataSource("wiktionary", file, Color.Blue, defaults)
         assertEquals("wiktionary", source.name)
         assertEquals(Color.Blue, source.color)
         val testWord = Word("goat", "GOAT")
         runBlocking {
-            val words = source.wordList.getWords(context)
+            val words = source.wordListFetcher.getWords(context)
             assertTrue(testWord in words)
             assertNotNull(source.definitionSearcher)
             val definition = source.definitionSearcher!!.lookupDefinition(context, testWord)

@@ -13,11 +13,14 @@ import java.util.*
  */
 data class DataSource(
     val name: String,
-    val wordList: WordListFetcher,
+    val wordListFetcher: WordListFetcher,
     val definitionSearcher: DefinitionSearcher?,
-    val color: Color
+    val color: Color,
+    val defaults: DataSourceDefaults,
 )
 
+
+data class DataSourceDefaults(val useWordList: Boolean, val useDefinitions: Boolean)
 
 /**
  * Find all data sources defined in a directory (looks for .json files and treats them as configs).
@@ -42,7 +45,9 @@ private data class DataSourceJson(
     val name: String,
     val type: String,
     val color: String,
-    val metadata: Map<String, String>
+    val metadata: Map<String, String>,
+    val useWordListByDefault: Boolean?,
+    val useDefinitionsByDefault: Boolean?,
 )
 
 
@@ -58,16 +63,21 @@ fun dataSourceFromJson(jsonFile: File): DataSource {
     val gson = Gson()
     val dataSourceJson = gson.fromJson(json, DataSourceJson::class.java)
     val color = parseColor(dataSourceJson.color)
+    val defaults = DataSourceDefaults(
+        dataSourceJson.useWordListByDefault ?: true,
+        dataSourceJson.useDefinitionsByDefault ?: true
+    )
+    println(defaults)
     return when (dataSourceJson.type) {
         "TextFileWordList" -> {
             val file = File(jsonFile.path.replace(".json", ".txt"))
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
-            wordListTextFileDataSource(dataSourceJson.name, file, color)
+            wordListTextFileDataSource(dataSourceJson.name, file, color, defaults)
         }
         "SqliteWordDatabase" -> {
             val file = File(jsonFile.path.replace(".json", ".sqlite"))
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
-            sqliteWordDatabaseDataSource(dataSourceJson.name, file, color)
+            sqliteWordDatabaseDataSource(dataSourceJson.name, file, color, defaults)
         }
         else -> throw UnknownTypeDataSourceError(dataSourceJson.type)
     }
