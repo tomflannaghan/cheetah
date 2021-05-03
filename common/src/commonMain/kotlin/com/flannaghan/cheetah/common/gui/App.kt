@@ -26,7 +26,7 @@ fun App(searchModel: SearchModel) {
                         searchModel.updateDefinition("")
                     } else {
                         val word = searchResult.words[index]
-                        scope.launch { searchModel.lookupDefinition(word) }
+                        searchModel.lookupDefinition(word)
                     }
                 }
 
