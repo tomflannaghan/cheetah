@@ -1,15 +1,16 @@
 package com.flannaghan.cheetah.common
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.flannaghan.cheetah.common.db.DatabaseDriverFactory
-import com.flannaghan.cheetah.common.db.WordDatabase
 
-class AndroidSearchModel(private val context: Context, private val viewModel: SearchViewModel) : SearchModel() {
+class AndroidSearchModel(
+    context: ApplicationContext,
+    private val viewModel: SearchViewModel
+) : SearchModel(context) {
+
     @Composable
     override fun queryState(): State<String> = viewModel.query.observeAsState("")
 
@@ -30,10 +31,6 @@ class AndroidSearchModel(private val context: Context, private val viewModel: Se
 
     override fun updateDefinition(definition: String) {
         viewModel.definition.value = definition
-    }
-
-    override fun getDatabase(): WordDatabase {
-        return WordDatabase(DatabaseDriverFactory(context).createDriver())
     }
 }
 

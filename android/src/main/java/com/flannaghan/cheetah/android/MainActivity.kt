@@ -15,8 +15,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val viewModel: SearchViewModel by viewModels()
         setContent {
-            val searchModel = AndroidSearchModel(LocalContext.current, viewModel)
             val context = AndroidApplicationContext(LocalContext.current)
+            val searchModel = AndroidSearchModel(context, viewModel)
             App(searchModel)
         }
     }
