@@ -5,13 +5,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.sp
 
 class DefinitionTheme {
     companion object {
         val h1 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        val h2 = TextStyle(fontSize = 16.sp, lineHeight = 20.sp)
+        val h2 = TextStyle(fontSize = 16.sp)
         val label = TextStyle(fontStyle = FontStyle.Italic)
+        val superscript = TextStyle(fontSize = 12.sp, baselineShift = BaselineShift.Superscript)
 
         val link: TextStyle
             @Composable

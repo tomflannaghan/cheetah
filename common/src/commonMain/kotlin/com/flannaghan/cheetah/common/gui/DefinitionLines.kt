@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -43,24 +44,32 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
 @Composable
 fun DefinitionSpan(elements: List<SpanElement>, modifier: Modifier = Modifier, style: TextStyle = TextStyle()) {
     Text(
-        buildAnnotatedString {
-            for (element in elements) {
-                when (element) {
-                    is Text -> append(element.text)
-                    is Link -> {
-                        withStyle(DefinitionTheme.link.toSpanStyle()) {
-                            append(element.text)
-                        }
-                    }
-                    is Label -> {
-                        withStyle(DefinitionTheme.label.toSpanStyle()) {
-                            append(element.text)
-                        }
-                    }
-                }
-            }
-        },
+        elements.buildAnnotatedString(),
         modifier = modifier,
         style = style
     )
+}
+
+@Composable
+fun List<SpanElement>.buildAnnotatedString(): AnnotatedString = buildAnnotatedString {
+    for (element in this@buildAnnotatedString) {
+        when (element) {
+            is Text -> append(element.text)
+            is Link -> {
+                withStyle(DefinitionTheme.link.toSpanStyle()) {
+                    append(element.text)
+                }
+            }
+            is Label -> {
+                withStyle(DefinitionTheme.label.toSpanStyle()) {
+                    append(element.contents.buildAnnotatedString())
+                }
+            }
+            is Superscript -> {
+                withStyle(DefinitionTheme.superscript.toSpanStyle()) {
+                    append(element.text)
+                }
+            }
+        }
+    }
 }

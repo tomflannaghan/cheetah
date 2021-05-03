@@ -1,13 +1,24 @@
 package com.flannaghan.cheetah.common.definitions
 
-val HEADING_REGEX = Regex("(=+)([^=]+)(=+)")
+/**
+ * Wiki syntax is taken from wikipedia.
+ * Supports:
+ * - only headers and ordered lists for structure (anything else will be skipped).
+ * - links [[xxx|Xxx]] or [[...]].
+ * - labels {{xxx}}.
+ * - superscript <sup>..</sup>
+ */
+
+val HEADING_REGEX = Regex("(=+)(.+?)(=+)")
 val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
 
 @Suppress("RegExpRedundantEscape") // Required on Android.
-val LABEL_REGEX = Regex("\\{\\{([^}]+)\\}\\}")
+val LABEL_REGEX = Regex("\\{\\{(.+?)\\}\\}")
 
 @Suppress("RegExpRedundantEscape")
-val LINK_REGEX = Regex("\\[\\[([^]]+)\\]\\]")
+val LINK_REGEX = Regex("\\[\\[(.+?)\\]\\]")
+
+val SUPERSCRIPT_REGEX = Regex("<sup>(.+?)</sup>")
 
 class DefinitionParser {
     private val orderedListStack = ArrayDeque<Int>()
@@ -36,24 +47,26 @@ class DefinitionParser {
     }
 
     private fun parseSpan(string: String): List<SpanElement> {
-        val linkMatch = LINK_REGEX.find(string)
-        val labelMatch = LABEL_REGEX.find(string)
-        val match = if (linkMatch != null && labelMatch != null) {
-            if (linkMatch.range.first < labelMatch.range.first) linkMatch else labelMatch
-        } else {
-            linkMatch ?: labelMatch
+        val regexes = listOf(LINK_REGEX, LABEL_REGEX, SUPERSCRIPT_REGEX)
+        val (regex, match) = regexes
+            .mapNotNull { it.find(string)?.let { match -> Pair(it, match) } }
+            .sortedBy { it.second.range.first }
+            .firstOrNull() ?: return listOf(Text(string))
+
+
+        val element = when (regex) {
+            LINK_REGEX -> Link(match.groupValues[1])
+            LABEL_REGEX -> Label(parseSpan(match.groupValues[1]))
+            SUPERSCRIPT_REGEX -> Superscript(match.groupValues[1])
+            else -> error("Shouldn't get here!")
         }
-        return if (match == null) {
-            listOf(Text(string))
-        } else {
-            val newElement = if (match == linkMatch) Link(match.groupValues[1]) else Label(match.groupValues[1])
-            val result = mutableListOf<SpanElement>()
-            if (match.range.first != 0) {
-                result.add(Text(string.substring(0, match.range.first)))
-            }
-            result.add(newElement)
-            result.addAll(parseSpan(string.substring(match.range.last + 1, string.length)))
-            result
+
+        val result = mutableListOf<SpanElement>()
+        if (match.range.first != 0) {
+            result.add(Text(string.substring(0, match.range.first)))
         }
+        result.add(element)
+        result.addAll(parseSpan(string.substring(match.range.last + 1, string.length)))
+        return result
     }
 }

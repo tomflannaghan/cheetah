@@ -20,4 +20,5 @@ data class OrderedListItem(val number: Int, val contents: List<SpanElement>, val
 abstract class SpanElement : DefinitionPart()
 data class Text(val text: String) : SpanElement()
 data class Link(val text: String) : SpanElement()
-data class Label(val text: String) : SpanElement()
+data class Label(val contents: List<SpanElement>) : SpanElement()
+data class Superscript(val text: String) : SpanElement()
