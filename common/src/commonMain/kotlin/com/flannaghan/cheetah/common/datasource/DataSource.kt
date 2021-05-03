@@ -64,6 +64,11 @@ fun dataSourceFromJson(jsonFile: File): DataSource {
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
             wordListTextFileDataSource(dataSourceJson.name, file, color)
         }
+        "SqliteWordDatabase" -> {
+            val file = File(jsonFile.path.replace(".json", ".sqlite"))
+            if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
+            sqliteWordDatabaseDataSource(dataSourceJson.name, file, color)
+        }
         else -> throw UnknownTypeDataSourceError(dataSourceJson.type)
     }
 }

@@ -1,0 +1,6 @@
+{
+  "name": "Wiktionary",
+  "color": "#FF0000",
+  "type": "SqliteWordDatabase",
+  "metadata": {}
+}
