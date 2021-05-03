@@ -27,7 +27,6 @@ class DesktopSearchModel(context: ApplicationContext) : SearchModel(context) {
     }
 
     override fun updateDefinition(definition: String) {
-        println("New def: $definition")
         _definitionState.value = definition
     }
 }

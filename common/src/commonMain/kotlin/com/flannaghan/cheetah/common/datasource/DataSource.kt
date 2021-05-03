@@ -67,7 +67,6 @@ fun dataSourceFromJson(jsonFile: File): DataSource {
         dataSourceJson.useWordListByDefault ?: true,
         dataSourceJson.useDefinitionsByDefault ?: true
     )
-    println(defaults)
     return when (dataSourceJson.type) {
         "TextFileWordList" -> {
             val file = File(jsonFile.path.replace(".json", ".txt"))
