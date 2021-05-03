@@ -63,7 +63,7 @@ abstract class SearchModel(private val context: ApplicationContext) {
                     .map { async { it.lookupDefinition(context, word) } }
                     .awaitAll()
             }
-            updateDefinition(definitions.joinToString("\n\n"))
+            updateDefinition(definitions.joinToString("\n"))
         }
     }
 }

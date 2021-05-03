@@ -24,7 +24,7 @@ internal class SqliteWordDatabaseDataSourceKtTest {
             assertNotNull(source.definitionSearcher)
             val definition = source.definitionSearcher!!.lookupDefinition(context, testWord)
             assertTrue(
-                definition.startsWith("==Noun=="),
+                definition.startsWith("=goat=\n==Noun==\n"),
                 "$definition doesn't start as expected"
             )
         }

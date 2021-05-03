@@ -19,7 +19,7 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             return db.definitionQueries
                 .definitionForWord(word.entry)
                 .executeAsList()
-                .joinToString("\n\n") { it.definition }
+                .joinToString("\n") { "=${it.word}=\n${it.definition}" }
         }
     }
     return DataSource(name, wordListFetcher, definitionSearcher, color, defaults)

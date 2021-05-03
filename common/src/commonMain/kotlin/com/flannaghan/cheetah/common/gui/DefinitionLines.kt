@@ -6,13 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.flannaghan.cheetah.common.definitions.*
@@ -44,23 +42,24 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
 
 @Composable
 fun DefinitionSpan(elements: List<SpanElement>) {
-    Text(
+    ClickableText(
         buildAnnotatedString {
             for (element in elements) {
                 when (element) {
                     is Text -> append(element.text)
                     is Link -> {
-                        withStyle(SpanStyle(color = Color.Blue)) {
+                        withStyle(DefinitionTheme.link.toSpanStyle()) {
                             append(element.text)
                         }
                     }
                     is Label -> {
-                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                        withStyle(DefinitionTheme.label.toSpanStyle()) {
                             append(element.text)
                         }
                     }
                 }
             }
-        }
+        },
+        onClick = {}
     )
 }
