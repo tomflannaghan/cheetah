@@ -3,10 +3,8 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.flannaghan.cheetah.common.db.DatabaseDriverFactory
-import com.flannaghan.cheetah.common.db.WordDatabase
 
-class DesktopSearchModel : SearchModel() {
+class DesktopSearchModel(context: ApplicationContext) : SearchModel(context) {
     private val _queryState = mutableStateOf("")
     private val _resultState = mutableStateOf(SearchResult(true, "", listOf()))
     private val _definitionState = mutableStateOf("")
@@ -31,9 +29,5 @@ class DesktopSearchModel : SearchModel() {
     override fun updateDefinition(definition: String) {
         println("New def: $definition")
         _definitionState.value = definition
-    }
-
-    override fun getDatabase(): WordDatabase {
-        return WordDatabase(DatabaseDriverFactory().createDriver())
     }
 }

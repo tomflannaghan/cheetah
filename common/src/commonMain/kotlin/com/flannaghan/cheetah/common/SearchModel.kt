@@ -2,13 +2,11 @@ package com.flannaghan.cheetah.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import com.flannaghan.cheetah.common.db.WordDatabase
+import com.flannaghan.cheetah.common.datasource.dataSources
 import com.flannaghan.cheetah.common.words.Word
-import com.flannaghan.cheetah.common.words.WordSource
-import com.flannaghan.cheetah.common.words.stringsToWordsParallel
 import kotlinx.coroutines.*
 
-abstract class SearchModel {
+abstract class SearchModel(private val context: ApplicationContext) {
     @Composable
     abstract fun queryState(): State<String>
 
@@ -18,14 +16,13 @@ abstract class SearchModel {
     @Composable
     abstract fun definitionState(): State<String>
 
-    var wordSources: List<WordSource> = listOf()
+    val dataSources = dataSources(context)
+
     private var _allWords: List<Word>? = null
 
     abstract fun updateQuery(query: String)
     abstract fun updateResult(result: SearchResult)
     abstract fun updateDefinition(definition: String)
-
-    abstract fun getDatabase(): WordDatabase
 
     private var currentJobQuery: String? = null
 
@@ -36,8 +33,12 @@ abstract class SearchModel {
         // Return if already populated.
         _allWords?.let { return@coroutineScope it }
         // Otherwise populate in parallel.
-        val allWordStrings = wordSources.flatMap { it.words }.toSet()
-        val allWords = stringsToWordsParallel(allWordStrings)
+        val allWords = dataSources
+            .map { async { it.wordList.getWords() } }
+            .awaitAll()
+            .flatten()
+            .toSet()
+            .sortedBy { it.string }
         _allWords = allWords
         return@coroutineScope allWords
     }
@@ -55,12 +56,13 @@ abstract class SearchModel {
     suspend fun lookupDefinition(word: Word) = coroutineScope {
         definitionLookupLauncher.launch(this) {
             val definitions = withContext(backgroundContext()) {
-                val db = getDatabase()
-                db.definitionQueries
-                    .definitionForWord(word.entry)
-                    .executeAsList()
+                dataSources
+                    .map { it.definitionSearcher }
+                    .filterNotNull()
+                    .map { async { it.lookupDefinition(word) } }
+                    .awaitAll()
             }
-            updateDefinition(definitions.joinToString("\n\n") { it.definition })
+            updateDefinition(definitions.joinToString("\n\n"))
         }
     }
 }

@@ -9,7 +9,6 @@ import com.flannaghan.cheetah.common.AndroidApplicationContext
 import com.flannaghan.cheetah.common.AndroidSearchModel
 import com.flannaghan.cheetah.common.SearchViewModel
 import com.flannaghan.cheetah.common.gui.App
-import com.flannaghan.cheetah.common.wordSources
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,7 +17,6 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val searchModel = AndroidSearchModel(LocalContext.current, viewModel)
             val context = AndroidApplicationContext(LocalContext.current)
-            searchModel.wordSources = wordSources(context)
             App(searchModel)
         }
     }
