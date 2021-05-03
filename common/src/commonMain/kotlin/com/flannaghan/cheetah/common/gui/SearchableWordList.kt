@@ -8,14 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.flannaghan.cheetah.common.SearchModel
-import com.flannaghan.cheetah.common.words.Word
 
 @Composable
 fun SearchableWordList(
     searchModel: SearchModel,
-    selectedWord: Word?,
+    selectedWordIndex: Int?,
     onQueryChanged: (String) -> Unit,
-    onWordSelected: (Word?) -> Unit
+    onWordSelected: (Int?) -> Unit
 ) {
     Column {
         val result = searchModel.resultState().value
@@ -24,8 +23,6 @@ fun SearchableWordList(
         ProgressTextField(
             queryText,
             onValueChange = {
-                // Consider a value change as deselecting the current selection.
-                onWordSelected(null)
                 onQueryChanged(it)
             },
             keyboardOptions = KeyboardOptions(
@@ -37,7 +34,7 @@ fun SearchableWordList(
             isError = !result.success
         )
         Text("${result.words.size} results", style = MaterialTheme.typography.caption)
-        WordList(result.words, selectedWord, onClick = {
+        WordList(result.words, selectedWordIndex, onClick = {
             onWordSelected(it)
         })
     }
