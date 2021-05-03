@@ -5,26 +5,28 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.flannaghan.cheetah.common.SearchModel
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.launch
 
 @Composable
-fun SearchableWordList(searchModel: SearchModel, selectedWord: Word?, onWordSelected: (Word?) -> Unit) {
+fun SearchableWordList(
+    searchModel: SearchModel,
+    selectedWord: Word?,
+    onQueryChanged: (String) -> Unit,
+    onWordSelected: (Word?) -> Unit
+) {
     Column {
         val result = searchModel.resultState().value
-        val scope = rememberCoroutineScope()
         val queryText = searchModel.queryState().value
 
         ProgressTextField(
             queryText,
             onValueChange = {
+                // Consider a value change as deselecting the current selection.
                 onWordSelected(null)
-                searchModel.updateQuery(it)
-                scope.launch { searchModel.doSearch(it) }
+                onQueryChanged(it)
             },
             keyboardOptions = KeyboardOptions(
                 autoCorrect = false,

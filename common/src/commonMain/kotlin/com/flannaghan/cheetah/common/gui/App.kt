@@ -18,11 +18,19 @@ fun App(searchModel: SearchModel) {
     MaterialTheme {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(Modifier.weight(1.0f)) {
-                SearchableWordList(searchModel, selectedWord, onWordSelected = { word ->
-                    selectedWord = word
-                    searchModel.updateDefinition("")
-                    if (word != null) scope.launch { searchModel.lookupDefinition(word) }
-                })
+                SearchableWordList(
+                    searchModel,
+                    selectedWord,
+                    onWordSelected = { word ->
+                        selectedWord = word
+                        searchModel.updateDefinition("")
+                        if (word != null) scope.launch { searchModel.lookupDefinition(word) }
+                    },
+                    onQueryChanged = {
+                        searchModel.updateQuery(it)
+                        scope.launch { searchModel.doSearch(it) }
+                    }
+                )
             }
 
             Row(Modifier.weight(1.0f).padding(top = 10.dp)) {
