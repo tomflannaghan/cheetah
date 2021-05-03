@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -26,7 +26,7 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                         2 -> DefinitionTheme.h2
                         else -> error("Too many levels in $it")
                     }
-                    Text(it.text, style = style, modifier = Modifier.padding(top = 10.dp))
+                    DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
                 }
                 is OrderedListItem -> {
                     Row {
@@ -41,8 +41,8 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DefinitionSpan(elements: List<SpanElement>) {
-    ClickableText(
+fun DefinitionSpan(elements: List<SpanElement>, modifier: Modifier = Modifier, style: TextStyle = TextStyle()) {
+    Text(
         buildAnnotatedString {
             for (element in elements) {
                 when (element) {
@@ -60,6 +60,7 @@ fun DefinitionSpan(elements: List<SpanElement>) {
                 }
             }
         },
-        onClick = {}
+        modifier = modifier,
+        style = style
     )
 }

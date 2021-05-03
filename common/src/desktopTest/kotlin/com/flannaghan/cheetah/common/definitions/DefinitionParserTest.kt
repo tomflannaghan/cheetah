@@ -9,11 +9,11 @@ internal class DefinitionParserTest {
     fun heading() {
         val parser = DefinitionParser()
         assertEquals(
-            Definition(listOf(Heading("Hello", 1))),
+            Definition(listOf(Heading(listOf(Text("Hello")), 1))),
             parser.parse("=Hello=")
         )
         assertEquals(
-            Definition(listOf(Heading("Hello", 4))),
+            Definition(listOf(Heading(listOf(Text("Hello")), 4))),
             parser.parse("====Hello====")
         )
     }
@@ -54,7 +54,7 @@ internal class DefinitionParserTest {
                 listOf(
                     OrderedListItem(1, listOf(Text("Item 1")), 1),
                     OrderedListItem(2, listOf(Text("Item 2")), 1),
-                    Heading("Hello", 1),
+                    Heading(listOf(Text("Hello")), 1),
                     OrderedListItem(1, listOf(Text("Item 1")), 1),
                 )
             ),

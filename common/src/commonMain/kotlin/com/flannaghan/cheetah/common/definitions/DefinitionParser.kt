@@ -2,8 +2,12 @@ package com.flannaghan.cheetah.common.definitions
 
 val HEADING_REGEX = Regex("(=+)([^=]+)(=+)")
 val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
-val LABEL_REGEX = Regex("\\{\\{([^}]+)}}")
-val LINK_REGEX = Regex("\\[\\[([^]]+)]]")
+
+@Suppress("RegExpRedundantEscape") // Required on Android.
+val LABEL_REGEX = Regex("\\{\\{([^}]+)\\}\\}")
+
+@Suppress("RegExpRedundantEscape")
+val LINK_REGEX = Regex("\\[\\[([^]]+)\\]\\]")
 
 class DefinitionParser {
     private val orderedListStack = ArrayDeque<Int>()
@@ -25,7 +29,7 @@ class DefinitionParser {
         val headingMatch = HEADING_REGEX.matchEntire(string)
         if (headingMatch != null) {
             val groups = headingMatch.groupValues
-            return Heading(groups[2], groups[1].length)
+            return Heading(parseSpan(groups[2]), groups[1].length)
         }
         println("Unparsable line: $string")
         return null
