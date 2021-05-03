@@ -1,4 +1,4 @@
-CREATE TABLE word (
+CREATE TABLE IF NOT EXISTS word (
     id INTEGER NOT NULL PRIMARY KEY,
     word TEXT NOT NULL,
     canonical_form TEXT NOT NULL

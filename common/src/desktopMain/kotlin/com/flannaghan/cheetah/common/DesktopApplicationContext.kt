@@ -7,6 +7,6 @@ class DesktopApplicationContext : ApplicationContext {
     override fun dataPath() = "/home/tom/src/cheetah/data/"
 
     override fun getWordDatabase(filePath: String): WordDatabase {
-        return WordDatabase(DatabaseDriverFactory().createDriver())
+        return WordDatabase(DatabaseDriverFactory().createDriver(filePath))
     }
 }

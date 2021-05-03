@@ -1,4 +1,4 @@
-CREATE TABLE wordDefinition (
+CREATE TABLE IF NOT EXISTS wordDefinition (
     id_word INTEGER NOT NULL,
     id_word_definition INTEGER NOT NULL,
     rank_definition INTEGER NOT NULL,

@@ -19,7 +19,7 @@ class AndroidSearchModel(
         viewModel.result.observeAsState(SearchResult(true, "", listOf()))
 
     @Composable
-    override fun definitionState(): State<String> = viewModel.query.observeAsState("")
+    override fun definitionState(): State<String> = viewModel.definition.observeAsState("")
 
     override fun updateQuery(query: String) {
         viewModel.query.value = query
