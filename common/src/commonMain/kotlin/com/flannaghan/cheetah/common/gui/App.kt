@@ -1,7 +1,6 @@
 package com.flannaghan.cheetah.common.gui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
@@ -14,40 +13,41 @@ import kotlinx.coroutines.launch
 fun App(searchModel: SearchModel) {
     var selectedWordIndex by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
+    val searchResult = searchModel.resultState().value
+
+    LaunchedEffect(searchResult.words, selectedWordIndex) {
+        val index = selectedWordIndex
+        if (index == null || index >= searchResult.words.size) {
+            searchModel.updateDefinition("")
+        } else {
+            val word = searchResult.words[index]
+            searchModel.lookupDefinition(word)
+        }
+    }
 
     MaterialTheme {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(Modifier.weight(1.0f)) {
-                val searchResult = searchModel.resultState().value
-
-                LaunchedEffect(searchResult.words, selectedWordIndex) {
-                    val index = selectedWordIndex
-                    if (index == null || index >= searchResult.words.size) {
-                        searchModel.updateDefinition("")
-                    } else {
-                        val word = searchResult.words[index]
-                        searchModel.lookupDefinition(word)
-                    }
+            ResponsiveSplitLayout(300.dp, 16.dp,
+                {
+                    SearchableWordList(
+                        searchModel,
+                        selectedWordIndex,
+                        onWordSelected = { index ->
+                            selectedWordIndex = index
+                        },
+                        onQueryChanged = {
+                            selectedWordIndex = null
+                            searchModel.updateQuery(it)
+                            scope.launch { searchModel.doSearch(it) }
+                            selectedWordIndex = 0
+                        }
+                    )
+                },
+                {
+                    println("Foo!")
+                    DefinitionView(searchModel.definitionState().value)
                 }
-
-                SearchableWordList(
-                    searchModel,
-                    selectedWordIndex,
-                    onWordSelected = { index ->
-                        selectedWordIndex = index
-                    },
-                    onQueryChanged = {
-                        selectedWordIndex = null
-                        searchModel.updateQuery(it)
-                        scope.launch { searchModel.doSearch(it) }
-                        selectedWordIndex = 0
-                    }
-                )
-            }
-
-            Row(Modifier.weight(1.0f).padding(top = 10.dp)) {
-                DefinitionView(searchModel.definitionState().value)
-            }
+            )
         }
     }
 }
