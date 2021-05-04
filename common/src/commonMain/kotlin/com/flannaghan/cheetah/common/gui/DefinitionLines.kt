@@ -1,9 +1,6 @@
 package com.flannaghan.cheetah.common.gui
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Text
@@ -20,20 +17,21 @@ import com.flannaghan.cheetah.common.definitions.*
 fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
     LazyColumn(modifier) {
         items(definition.children) {
-            when (it) {
-                is Heading -> {
-                    val style = when (it.level) {
-                        1 -> DefinitionTheme.h1
-                        2 -> DefinitionTheme.h2
-                        else -> error("Too many levels in $it")
+            Row(Modifier.fillMaxWidth()) {
+                when (it) {
+                    is Heading -> {
+                        val style = when (it.level) {
+                            1 -> DefinitionTheme.h1
+                            2 -> DefinitionTheme.h2
+                            else -> error("Too many levels in $it")
+                        }
+                        DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
                     }
-                    DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
-                }
-                is OrderedListItem -> {
-                    Row {
+                    is OrderedListItem -> {
                         Spacer(Modifier.width(30.dp * (it.level - 1)))
                         Text("${it.number}.", style = DefinitionTheme.number)
                         DefinitionSpan(it.contents, style = DefinitionTheme.body)
+
                     }
                 }
             }
