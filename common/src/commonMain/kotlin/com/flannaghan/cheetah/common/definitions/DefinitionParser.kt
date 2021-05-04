@@ -16,7 +16,7 @@ val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
 val LABEL_REGEX = Regex("\\{\\{(.+?)\\}\\}")
 
 @Suppress("RegExpRedundantEscape")
-val LINK_REGEX = Regex("\\[\\[(.+?)\\]\\]")
+val LINK_REGEX = Regex("\\[\\[(.+?\\|)?+(.+?)\\]\\]")
 
 val SUPERSCRIPT_REGEX = Regex("<sup>(.+?)</sup>")
 
@@ -55,7 +55,7 @@ class DefinitionParser {
 
 
         val element = when (regex) {
-            LINK_REGEX -> Link(match.groupValues[1])
+            LINK_REGEX -> Link(match.groupValues.last())
             LABEL_REGEX -> Label(parseSpan(match.groupValues[1]))
             SUPERSCRIPT_REGEX -> Superscript(match.groupValues[1])
             else -> error("Shouldn't get here!")
