@@ -16,7 +16,7 @@ abstract class SearchModel(private val context: ApplicationContext) {
     @Composable
     abstract fun definitionState(): State<String>
 
-    val dataSources = dataSources(context)
+    private val dataSources = dataSources(context)
 
     private var _allWords: List<Word>? = null
 
