@@ -44,7 +44,6 @@ fun App(searchModel: SearchModel) {
                     )
                 },
                 {
-                    println("Foo!")
                     DefinitionView(searchModel.definitionState().value)
                 }
             )

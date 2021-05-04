@@ -1,5 +1,7 @@
 package com.flannaghan.cheetah.common.definitions
 
+import kotlin.text.Regex.Companion.escape
+
 /**
  * Wiki syntax is taken from wikipedia.
  * Supports:
@@ -16,7 +18,7 @@ val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
 val LABEL_REGEX = Regex("\\{\\{(.+?)\\}\\}")
 
 @Suppress("RegExpRedundantEscape")
-val LINK_REGEX = Regex("\\[\\[(.+?\\|)?+(.+?)\\]\\]")
+val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")
 
 val SUPERSCRIPT_REGEX = Regex("<sup>(.+?)</sup>")
 
@@ -42,31 +44,47 @@ class DefinitionParser {
             val groups = headingMatch.groupValues
             return Heading(parseSpan(groups[2]), groups[1].length)
         }
-        println("Unparsable line: $string")
         return null
     }
 
+    private data class Bracket(val start: String, val end: String, val makeElement: (String) -> SpanElement)
+
+    private val brackets = listOf(
+        Bracket("{{", "}}") { Label(parseSpan(it)) },
+        Bracket("[[", "]]") {
+            Link(LINK_REGEX.matchEntire(it)?.groupValues?.last() ?: error("Link failed $it"))
+        },
+        Bracket("<sup>", "</sup>") { Superscript(it) },
+    )
+    private val tokenRegex = Regex(brackets.joinToString("|") { "${escape(it.start)}|${escape(it.end)}" })
+    private val bracketStarts = brackets.map { it.start }.toSet()
+
     private fun parseSpan(string: String): List<SpanElement> {
-        val regexes = listOf(LINK_REGEX, LABEL_REGEX, SUPERSCRIPT_REGEX)
-        val (regex, match) = regexes
-            .mapNotNull { it.find(string)?.let { match -> Pair(it, match) } }
-            .sortedBy { it.second.range.first }
-            .firstOrNull() ?: return listOf(Text(string))
-
-
-        val element = when (regex) {
-            LINK_REGEX -> Link(match.groupValues.last())
-            LABEL_REGEX -> Label(parseSpan(match.groupValues[1]))
-            SUPERSCRIPT_REGEX -> Superscript(match.groupValues[1])
-            else -> error("Shouldn't get here!")
-        }
-
+        var location = 0
+        val stack = ArrayDeque<Pair<String, Int>>()
         val result = mutableListOf<SpanElement>()
-        if (match.range.first != 0) {
-            result.add(Text(string.substring(0, match.range.first)))
+        while (location < string.length) {
+            val nextToken = tokenRegex.find(string, location) ?: break
+            if (nextToken.value in bracketStarts) {
+                if (nextToken.range.first != location && stack.size == 0) {
+                    result.add(Text(string.substring(location until nextToken.range.first)))
+                }
+                stack.addLast(Pair(nextToken.value, nextToken.range.last + 1))
+            } else if (stack.size != 0) {
+                val (topStart, topLocation) = stack.last()
+                val bracket = brackets.firstOrNull { it.start == topStart && it.end == nextToken.value }
+                if (bracket != null) {
+                    stack.removeLast()
+                    if (stack.size == 0) {
+                        result.add(
+                            bracket.makeElement(string.substring(topLocation until nextToken.range.first))
+                        )
+                    }
+                }
+            }
+            location = nextToken.range.last + 1
         }
-        result.add(element)
-        result.addAll(parseSpan(string.substring(match.range.last + 1, string.length)))
+        if (location != string.length) result.add(Text(string.substring(location)))
         return result
     }
 }

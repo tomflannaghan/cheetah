@@ -80,13 +80,13 @@ internal class DefinitionParserTest {
                             Text("Hello "),
                             Link("I'm a link {{not a label}}"),
                             Text(" and some text "),
-                            Label("and a label"),
+                            Label(listOf(Text("and a label "), Link("with link"))),
                             Text(" !")
                         ), 1
                     )
                 )
             ),
-            parser.parse("#Hello [[I'm a link {{not a label}}]] and some text {{and a label}} !")
+            parser.parse("#Hello [[I'm a link {{not a label}}]] and some text {{and a label [[with link]]}} !")
         )
     }
 }
