@@ -32,8 +32,8 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                 is OrderedListItem -> {
                     Row {
                         Spacer(Modifier.width(30.dp * (it.level - 1)))
-                        Text("${it.number}.")
-                        DefinitionSpan(it.contents)
+                        Text("${it.number}.", style = DefinitionTheme.number)
+                        DefinitionSpan(it.contents, style = DefinitionTheme.body)
                     }
                 }
             }

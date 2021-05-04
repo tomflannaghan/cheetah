@@ -10,10 +10,12 @@ import androidx.compose.ui.unit.sp
 
 class DefinitionTheme {
     companion object {
-        val h1 = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        val h2 = TextStyle(fontSize = 16.sp)
+        val h1 = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        val h2 = TextStyle(fontSize = 14.sp)
         val label = TextStyle(fontStyle = FontStyle.Italic)
         val superscript = TextStyle(fontSize = 12.sp, baselineShift = BaselineShift.Superscript)
+        val body = TextStyle(fontSize = 14.sp)
+        val number = TextStyle(fontSize = 14.sp)
 
         val link: TextStyle
             @Composable
