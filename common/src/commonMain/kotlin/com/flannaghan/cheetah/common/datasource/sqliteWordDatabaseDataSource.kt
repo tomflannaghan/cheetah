@@ -19,7 +19,14 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             return db.definitionQueries
                 .definitionForWord(word.entry)
                 .executeAsList()
-                .joinToString("\n") { "=${it.word}=\n${it.definition}" }
+                .joinToString("\n") {
+                    val header = if (it.relationship == "") {
+                        it.word_definition
+                    } else {
+                        "${it.relationship} ${it.word_definition}"
+                    }
+                    "=$header=\n${it.definition}"
+                }
         }
     }
     return DataSource(name, wordListFetcher, definitionSearcher, color, defaults)

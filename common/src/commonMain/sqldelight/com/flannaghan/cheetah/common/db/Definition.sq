@@ -11,6 +11,15 @@ insert:
 INSERT INTO definition(id_word, rank, definition, definition_words) VALUES ?;
 
 definitionForWord:
-SELECT * FROM definition
-JOIN word ON word.id = definition.id_word
+SELECT
+    word_definition.word AS word_definition,
+    word.word,
+    definition.*,
+    wordDefinition.relationship
+FROM definition
+JOIN wordDefinition ON
+    wordDefinition.id_word_definition = definition.id_word
+    AND wordDefinition.rank_definition = definition.rank
+JOIN word ON word.id = wordDefinition.id_word
+JOIN word AS word_definition ON word_definition.id = wordDefinition.id_word_definition
 WHERE word.canonical_form = ?;
