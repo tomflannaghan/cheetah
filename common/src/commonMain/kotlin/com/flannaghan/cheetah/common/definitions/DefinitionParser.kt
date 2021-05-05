@@ -13,14 +13,7 @@ import kotlin.text.Regex.Companion.escape
 
 val HEADING_REGEX = Regex("(=+)(.+?)(=+)")
 val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
-
-@Suppress("RegExpRedundantEscape") // Required on Android.
-val LABEL_REGEX = Regex("\\{\\{(.+?)\\}\\}")
-
-@Suppress("RegExpRedundantEscape")
-val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")
-
-val SUPERSCRIPT_REGEX = Regex("<sup>(.+?)</sup>")
+val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")  // Removes the target of links.
 
 class DefinitionParser {
     private val orderedListStack = ArrayDeque<Int>()
