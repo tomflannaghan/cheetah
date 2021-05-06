@@ -1,0 +1,22 @@
+
+CREATE TABLE derivedWord (
+    id_word INTEGER NOT NULL,
+    id_word_parent INTEGER NOT NULL,
+    id_relationship INTEGER NOT NULL,
+    PRIMARY KEY (id_word, id_word_parent, id_relationship),
+    FOREIGN KEY (id_word) REFERENCES word (id),
+    FOREIGN KEY (id_word_parent) REFERENCES word (id),
+    FOREIGN KEY (id_relationship) REFERENCES relationship (id)
+);
+
+parentWordsForEntry:
+SELECT
+    word.word AS derivedWord,
+    parentWord.word AS parentWord,
+    parentWord.canonical_form,
+    relationship.name AS relationshipName
+FROM derivedWord
+JOIN word ON derivedWord.id_word = word.id
+JOIN word AS parentWord ON derivedWord.id_word_parent = parentWord.id
+JOIN relationship ON derivedWord.id_relationship = relationship.id
+WHERE word.canonical_form = ?;

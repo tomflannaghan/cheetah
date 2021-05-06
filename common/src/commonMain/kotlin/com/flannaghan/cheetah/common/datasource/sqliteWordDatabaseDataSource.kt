@@ -16,17 +16,33 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
     val definitionSearcher = object : DefinitionSearcher {
         override suspend fun lookupDefinition(context: ApplicationContext, word: Word): String {
             val db = context.getWordDatabase(path)
-            return db.definitionQueries
-                .definitionForWord(word.entry)
-                .executeAsList()
-                .joinToString("\n") {
-                    val header = if (it.relationship == "") {
-                        it.word_definition
-                    } else {
-                        "${it.relationship} ${it.word_definition}"
-                    }
-                    "=$header=\n${it.definition}"
+
+            // We use entries rather than words here. Could easily switch if we wanted.
+            val parentWordRows = db.derivedWordQueries.parentWordsForEntry(word.entry).executeAsList()
+            val words = db.wordQueries.wordsForEntry(word.entry).executeAsList().map { it.word }
+
+            // Construct a map from {parentWord: [relationshipName]}
+            val wordToRelationships =
+                parentWordRows.groupBy { row -> row.parentWord }.mapValues {
+                    it.value.map { it.relationshipName }.toSet().toList()
                 }
+
+            val resultLines = mutableListOf<String>()
+            for (word_ in words) {
+                for (definition in db.definitionQueries.definitionsForWord(word_).executeAsList()) {
+                    resultLines.add("=$word_=")
+                    resultLines.add(definition.definition)
+                }
+            }
+
+            for ((parentWord, relationships) in wordToRelationships) {
+                for (parentDef in db.definitionQueries.definitionsForWord(parentWord).executeAsList()) {
+                    resultLines.add("=$parentWord (${relationships.joinToString(", ")})=")
+                    resultLines.add(parentDef.definition)
+                }
+            }
+
+            return resultLines.joinToString("\n")
         }
     }
     return DataSource(name, wordListFetcher, definitionSearcher, color, defaults)

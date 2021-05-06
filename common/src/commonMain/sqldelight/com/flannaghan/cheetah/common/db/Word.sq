@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS word (
 selectAll:
 SELECT * FROM word;
 
-selectAllWithLimit:
-SELECT * FROM word LIMIT ?;
+wordsForEntry:
+SELECT * FROM word WHERE canonical_form = ?;
