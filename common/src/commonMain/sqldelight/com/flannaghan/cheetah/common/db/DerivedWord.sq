@@ -1,5 +1,5 @@
 
-CREATE TABLE derivedWord (
+CREATE TABLE IF NOT EXISTS derivedWord (
     id_word INTEGER NOT NULL,
     id_word_parent INTEGER NOT NULL,
     id_relationship INTEGER NOT NULL,
