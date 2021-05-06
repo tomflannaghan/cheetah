@@ -1,25 +1,13 @@
-CREATE TABLE IF NOT EXISTS definition (
-    id_word INTEGER NOT NULL,
-    rank INTEGER NOT NULL,
-    definition TEXT NOT NULL,
-    definition_words TEXT NOT NULL,
-    PRIMARY KEY (id_word, rank),
-    FOREIGN KEY (id_word) REFERENCES word (id)
+CREATE VIRTUAL TABLE IF NOT EXISTS definition USING FTS4 (
+    word TEXT NOT NULL,
+    text TEXT NOT NULL,
+    tokenize=unicode61 "remove_diacritics=1" "separators=[](){}" "tokenchars=-"
 );
-
-insert:
-INSERT INTO definition(id_word, rank, definition, definition_words) VALUES ?;
-
-definitionsForEntry:
-SELECT *
-FROM definition
-JOIN word ON word.id = definition.id_word
-WHERE word.canonical_form = ?
-ORDER BY definition.id_word, definition.rank;
 
 definitionsForWord:
 SELECT *
 FROM definition
-JOIN word ON word.id = definition.id_word
+JOIN wordDefinition ON wordDefinition.id_definition = definition.rowid
+JOIN word ON word.id = wordDefinition.id_word
 WHERE word.word = ?
-ORDER BY definition.id_word, definition.rank;
+ORDER BY wordDefinition.rank;

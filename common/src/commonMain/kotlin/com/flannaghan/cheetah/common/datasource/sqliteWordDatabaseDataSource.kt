@@ -30,14 +30,14 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             for (word_ in words) {
                 for (definition in db.definitionQueries.definitionsForWord(word_).executeAsList()) {
                     resultLines.add("=$word_=")
-                    resultLines.add(definition.definition)
+                    resultLines.add(definition.text)
                 }
             }
 
             for ((parentWord, relationships) in wordToRelationships) {
                 for (parentDef in db.definitionQueries.definitionsForWord(parentWord).executeAsList()) {
                     resultLines.add("=$parentWord (${relationships.joinToString(", ")})=")
-                    resultLines.add(parentDef.definition)
+                    resultLines.add(parentDef.text)
                 }
             }
 
