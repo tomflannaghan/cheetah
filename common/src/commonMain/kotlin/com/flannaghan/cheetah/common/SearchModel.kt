@@ -48,7 +48,12 @@ abstract class SearchModel(private val context: ApplicationContext) {
         if (query == currentJobQuery) return@coroutineScope
         searchLauncher.launch(this) {
             val newResult = withContext(backgroundContext()) {
-                search(getAllWords(), query)
+                search(getAllWords(), query) { query, words ->
+                    dataSources.firstOrNull { it.definitionSearcher != null }
+                        ?.definitionSearcher
+                        ?.fullTextSearch(context, words, query)
+                        ?: return@search words
+                }
             }
             updateResult(newResult)
         }

@@ -5,15 +5,33 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.util.*
+import java.util.regex.Pattern
 
 data class SearchResult(val success: Boolean, val query: String, val words: List<Word>)
 
-suspend fun search(words: List<Word>, query: String): SearchResult = coroutineScope {
+suspend fun search(
+    words: List<Word>,
+    query: String,
+    fts: (suspend (String, List<Word>) -> List<Word>)? = null
+): SearchResult = coroutineScope {
     val matches = mutableListOf<Word>()
     var success = false
     try {
-        val patterns = query.lines().map { Regex(it.toUpperCase(Locale.ROOT)).toPattern() }
-        words.chunked(10000).map { chunk ->
+        val patterns = mutableListOf<Pattern>()
+        val fullTextSearchTerms = mutableListOf<String>()
+        for (queryLine in query.lines()) {
+            if (queryLine.startsWith("s:")) {
+                fullTextSearchTerms.add(queryLine.substring(2))
+            } else {
+                patterns.add(Regex(queryLine.toUpperCase(Locale.ROOT)).toPattern())
+            }
+        }
+
+        val filteredWords = if (fullTextSearchTerms.isNotEmpty() && fts != null) {
+            fts(fullTextSearchTerms.joinToString(" AND ") { "\"$it\"" }, words)
+        } else words
+
+        filteredWords.chunked(10000).map { chunk ->
             async {
                 val result = mutableListOf<Word>()
                 // Matcher isn't threadsafe so make one for each chunk.

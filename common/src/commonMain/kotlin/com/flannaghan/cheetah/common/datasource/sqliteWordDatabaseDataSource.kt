@@ -15,7 +15,7 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
     }
     val definitionSearcher = object : DefinitionSearcher {
         override suspend fun lookupDefinition(context: ApplicationContext, word: Word): String {
-            val db = context.getWordDatabase(path)
+            val db = context.getWordDatabaseCached(path)
             // We use entries rather than words here. Could easily switch if we wanted.
             val parentWordRows = db.derivedWordQueries.parentWordsForEntry(word.entry).executeAsList()
             val words = db.wordQueries.wordsForEntry(word.entry).executeAsList().map { it.word }
@@ -42,6 +42,26 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             }
 
             return resultLines.joinToString("\n")
+        }
+
+        override suspend fun fullTextSearch(
+            context: ApplicationContext,
+            allWords: List<Word>,
+            pattern: String
+        ): List<Word> {
+            val db = context.getWordDatabaseCached(path)
+            if (pattern.length < 3) return emptyList()
+            val canonicalForms = db.definitionQueries
+                .fullTextSearch(pattern)
+                .executeAsList()
+                .map { it.canonical_form }
+                .toSet()
+            val derivedCanonicalForms = db.definitionQueries
+                .fullTextSearchDerivedWords(pattern)
+                .executeAsList()
+                .map { it.canonical_form }
+                .toSet()
+            return allWords.filter { it.entry in canonicalForms || it.entry in derivedCanonicalForms }
         }
     }
     return DataSource(name, wordListFetcher, definitionSearcher, color, defaults)
