@@ -45,7 +45,12 @@ class DefinitionParser {
     private val brackets = listOf(
         Bracket("{{", "}}") { Label(parseSpan(it)) },
         Bracket("[[", "]]") {
-            Link(LINK_REGEX.matchEntire(it)?.groupValues?.last() ?: it)
+            var linkContents = LINK_REGEX.matchEntire(it)?.groupValues?.last() ?: it
+            // Links can't contain elements themselves so remove all brackets.
+            for (seperator in listOf("{{", "}}", "[[", "]]")) {
+                linkContents = linkContents.replace(seperator, "")
+            }
+            Link(linkContents)
         },
         Bracket("<sup>", "</sup>") { Superscript(it) },
     )
