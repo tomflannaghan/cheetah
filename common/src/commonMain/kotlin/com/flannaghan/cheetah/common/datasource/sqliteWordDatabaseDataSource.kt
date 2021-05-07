@@ -5,6 +5,10 @@ import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.words.Word
 import java.io.File
 
+// These give loads of results so exclude them. They are slow if we encounter them.
+// (If we limited results we could remove this)
+private val BAD_PATTERNS = setOf("the", "and", "one")
+
 fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defaults: DataSourceDefaults): DataSource {
     val path = dbFile.absolutePath
     val wordListFetcher = object : WordListFetcher {
@@ -50,7 +54,7 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             pattern: String
         ): List<Word> {
             val db = context.getWordDatabaseCached(path)
-            if (pattern.length < 3) return emptyList()
+            if (pattern.length < 3 || pattern in BAD_PATTERNS) return emptyList()
             val canonicalForms = db.definitionQueries
                 .fullTextSearch(pattern)
                 .executeAsList()
