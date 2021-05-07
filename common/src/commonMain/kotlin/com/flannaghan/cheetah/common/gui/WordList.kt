@@ -4,13 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextOverflow
 import com.flannaghan.cheetah.common.words.Word
 
@@ -21,37 +18,22 @@ fun WordList(
     onClick: (Int) -> Unit = { },
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.onKeyEvent {
-        when {
-            it.type != KeyEventType.KeyDown -> {
-                false
-            }
-            it.key == Key.DirectionUp -> {
-                if (selectedWordIndex != null && selectedWordIndex > 0)
-                    onClick(selectedWordIndex - 1)
-                true
-            }
-            it.key == Key.DirectionDown -> {
-                if (selectedWordIndex != null && selectedWordIndex < words.size - 1)
-                    onClick(selectedWordIndex + 1)
-                true
-            }
-            else -> {
-                false
-            }
-        }
-    }) {
-        itemsIndexed(words) { index, word ->
-            WordListItem(
-                word,
-                onClick = {
-                    onClick(index)
-                },
-                selected = selectedWordIndex == index
-            )
-        }
+    ListWithKeyboardInteraction(
+        words,
+        selectedWordIndex,
+        onChangeSelection = onClick,
+        modifier = modifier
+    ) { index, word ->
+        WordListItem(
+            word,
+            onClick = {
+                onClick(index)
+            },
+            selected = selectedWordIndex == index
+        )
     }
 }
+
 
 @Composable
 fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
