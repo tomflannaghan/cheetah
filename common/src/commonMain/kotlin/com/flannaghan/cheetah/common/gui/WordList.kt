@@ -10,12 +10,37 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextOverflow
 import com.flannaghan.cheetah.common.words.Word
 
 @Composable
-fun WordList(words: List<Word>, selectedWordIndex: Int? = null, onClick: (Int) -> Unit = { }) {
-    LazyColumn {
+fun WordList(
+    words: List<Word>,
+    selectedWordIndex: Int? = null,
+    onClick: (Int) -> Unit = { },
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier = modifier.onKeyEvent {
+        when {
+            it.type != KeyEventType.KeyDown -> {
+                false
+            }
+            it.key == Key.DirectionUp -> {
+                if (selectedWordIndex != null && selectedWordIndex > 0)
+                    onClick(selectedWordIndex - 1)
+                true
+            }
+            it.key == Key.DirectionDown -> {
+                if (selectedWordIndex != null && selectedWordIndex < words.size - 1)
+                    onClick(selectedWordIndex + 1)
+                true
+            }
+            else -> {
+                false
+            }
+        }
+    }) {
         itemsIndexed(words) { index, word ->
             WordListItem(
                 word,
@@ -31,14 +56,11 @@ fun WordList(words: List<Word>, selectedWordIndex: Int? = null, onClick: (Int) -
 @Composable
 fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
     val backgroundColour = if (selected) MaterialTheme.colors.secondary else MaterialTheme.colors.background
-    Row(modifier = Modifier.clickable { onClick() }.background(color = backgroundColour)) {
+    Row(modifier = Modifier.clickable(onClick = onClick).background(color = backgroundColour)) {
         Text(
             word.string, style = MaterialTheme.typography.body1, overflow = TextOverflow.Ellipsis,
             maxLines = 3
         )
         Spacer(Modifier.weight(1f))
-        Text(
-            word.entry, style = MaterialTheme.typography.body2, overflow = TextOverflow.Clip, maxLines = 1
-        )
     }
 }

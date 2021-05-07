@@ -21,7 +21,8 @@ fun ProgressTextField(
     onValueChange: (String) -> Unit,
     isError: Boolean = false,
     isBusy: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions()
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
+    modifier: Modifier = Modifier,
 ) {
     val showProgressIndicator = remember { mutableStateOf(false) }
     val colors = if (isError)
@@ -40,7 +41,7 @@ fun ProgressTextField(
                 text,
                 onValueChange = onValueChange,
                 colors = colors,
-                modifier = Modifier.weight(1f),
+                modifier = modifier.weight(1f),
                 keyboardOptions = keyboardOptions
             )
         }
