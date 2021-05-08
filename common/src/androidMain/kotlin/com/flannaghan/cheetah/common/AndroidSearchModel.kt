@@ -5,11 +5,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.CoroutineScope
 
 class AndroidSearchModel(
     context: ApplicationContext,
-    private val viewModel: SearchViewModel
-) : SearchModel(context) {
+    private val viewModel: SearchViewModel,
+    scope: CoroutineScope
+) : SearchModel(context, scope) {
 
     @Composable
     override fun queryState(): State<String> = viewModel.query.observeAsState("")

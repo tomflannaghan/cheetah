@@ -3,8 +3,9 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.CoroutineScope
 
-class DesktopSearchModel(context: ApplicationContext) : SearchModel(context) {
+class DesktopSearchModel(context: ApplicationContext, scope: CoroutineScope) : SearchModel(context, scope) {
     private val _queryState = mutableStateOf("")
     private val _resultState = mutableStateOf(SearchResult(true, "", listOf()))
     private val _definitionState = mutableStateOf("")

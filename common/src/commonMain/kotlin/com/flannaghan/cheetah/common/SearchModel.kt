@@ -6,7 +6,7 @@ import com.flannaghan.cheetah.common.datasource.dataSources
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.*
 
-abstract class SearchModel(private val context: ApplicationContext) {
+abstract class SearchModel(private val context: ApplicationContext, scope: CoroutineScope) {
     @Composable
     abstract fun queryState(): State<String>
 
@@ -18,7 +18,7 @@ abstract class SearchModel(private val context: ApplicationContext) {
 
     private val dataSources = dataSources(context)
 
-    private var _allWords: List<Word>? = null
+    private val allWordsDeferred = scope.async { populateAllWords() }
 
     abstract fun updateQuery(query: String)
     abstract fun updateResult(result: SearchResult)
@@ -26,13 +26,10 @@ abstract class SearchModel(private val context: ApplicationContext) {
 
     private var currentJobQuery: String? = null
 
-    val searchLauncher = SingleJobLauncher()
-    val definitionLookupLauncher = SingleJobLauncher()
+    private val searchLauncher = SingleJobLauncher()
+    private val definitionLookupLauncher = SingleJobLauncher()
 
-    suspend fun getAllWords(): List<Word> = coroutineScope {
-        // Return if already populated.
-        _allWords?.let { return@coroutineScope it }
-        // Otherwise populate in parallel.
+    private suspend fun populateAllWords() = coroutineScope {
         val allWords = dataSources
             .filter { it.defaults.useWordList }
             .map { async { it.wordListFetcher.getWords(context) } }
@@ -40,9 +37,10 @@ abstract class SearchModel(private val context: ApplicationContext) {
             .flatten()
             .distinct()
             .sortedBy { it.entry }
-        _allWords = allWords
-        return@coroutineScope allWords
+        allWords
     }
+
+    private suspend fun getAllWords(): List<Word> = allWordsDeferred.await()
 
     suspend fun doSearch(query: String) = coroutineScope {
         if (query == currentJobQuery) return@coroutineScope
