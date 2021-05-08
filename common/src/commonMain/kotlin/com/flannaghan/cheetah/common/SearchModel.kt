@@ -38,8 +38,8 @@ abstract class SearchModel(private val context: ApplicationContext) {
             .map { async { it.wordListFetcher.getWords(context) } }
             .awaitAll()
             .flatten()
-            .toSet()
-            .sortedBy { it.string }
+            .distinct()
+            .sortedBy { it.entry }
         _allWords = allWords
         return@coroutineScope allWords
     }

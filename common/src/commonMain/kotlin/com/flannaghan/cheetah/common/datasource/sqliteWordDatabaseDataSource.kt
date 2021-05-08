@@ -24,7 +24,7 @@ fun sqliteWordDatabaseDataSource(name: String, dbFile: File, color: Color, defau
             // Construct a map from {parentWord: [relationshipName]}
             val wordToRelationships =
                 parentWordRows.groupBy { row -> row.parentWord }.mapValues {
-                    it.value.map { row -> row.relationshipName }.toSet().toList()
+                    it.value.map { row -> row.relationshipName }.distinct()
                 }
 
             val resultLines = mutableListOf<String>()
