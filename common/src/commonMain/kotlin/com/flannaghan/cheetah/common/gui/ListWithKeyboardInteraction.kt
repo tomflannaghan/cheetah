@@ -4,10 +4,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
-import kotlinx.coroutines.launch
 import kotlin.math.max
 
 @Composable
@@ -19,7 +18,6 @@ fun <T> ListWithKeyboardInteraction(
     renderItem: @Composable (index: Int, item: T) -> Unit
 ) {
     val scrollState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
 
     // Scroll, clip indices, etc.
     fun onChangeSelection_(index: Int) {
@@ -28,16 +26,20 @@ fun <T> ListWithKeyboardInteraction(
             index >= items.size -> items.size - 1
             else -> index
         }
-        val startVisible = scrollState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
-        val endVisible = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-        val numberVisible = scrollState.layoutInfo.visibleItemsInfo.size
-        if (clippedIndex < startVisible) {
-            scope.launch { scrollState.scrollToItem(clippedIndex) }
-        } else if (clippedIndex >= endVisible) {
-            scope.launch { scrollState.scrollToItem(max(clippedIndex - numberVisible + 2, 0)) }
-        }
         onChangeSelection(clippedIndex)
     }
+
+    // Make sure we stay visible.
+    val startVisible = scrollState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+    val endVisible = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+    val numberVisible = scrollState.layoutInfo.visibleItemsInfo.size
+    val targetIndex = when {
+        selectedIndex == null -> null
+        selectedIndex < startVisible -> selectedIndex
+        selectedIndex >= endVisible -> max(selectedIndex - numberVisible + 2, 0)
+        else -> null
+    }
+    if (targetIndex != null) LaunchedEffect(targetIndex) { scrollState.scrollToItem(targetIndex) }
 
     LazyColumn(
         modifier.onPreviewKeyEvent {
