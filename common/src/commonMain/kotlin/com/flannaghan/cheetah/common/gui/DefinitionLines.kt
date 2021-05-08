@@ -3,8 +3,10 @@ package com.flannaghan.cheetah.common.gui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -15,7 +17,11 @@ import com.flannaghan.cheetah.common.definitions.*
 
 @Composable
 fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
-    LazyColumn(modifier) {
+    val scrollState = rememberLazyListState()
+    // Reset the scroll state to 0 whenever the definition changes.
+    LaunchedEffect(definition) { scrollState.scrollToItem(0) }
+
+    LazyColumn(modifier, scrollState) {
         items(definition.children) {
             Row(Modifier.fillMaxWidth()) {
                 when (it) {
@@ -31,7 +37,6 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                         Spacer(Modifier.width(30.dp * (it.level - 1)))
                         Text("${it.number}.", style = DefinitionTheme.number)
                         DefinitionSpan(it.contents, style = DefinitionTheme.body)
-
                     }
                 }
             }
