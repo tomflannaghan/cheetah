@@ -18,9 +18,9 @@ sealed class Matcher {
 /**
  * Standard regex matching.
  */
-data class RegexMatcher(val pattern: Pattern) : Matcher() {
+data class RegexMatcher(val pattern: String) : Matcher() {
     override suspend fun match(words: List<Word>): List<Boolean> {
-        val matcher = pattern.matcher("")
+        val matcher = Pattern.compile(pattern).matcher("")
         return words.map {
             matcher.reset(it.entry)
             matcher.matches()
@@ -149,7 +149,7 @@ private fun reorderChildrenDescending(matchers: List<Matcher>) = matchers
     .sortedByDescending { weight(it) }
 
 private fun weight(matcher: Matcher): Double = when (matcher) {
-    is RegexMatcher -> matcher.pattern.pattern().count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
+    is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is FullTextSearchMatcher -> 1000.0
     else -> matcher.children.sumOf { weight(it) }
 }

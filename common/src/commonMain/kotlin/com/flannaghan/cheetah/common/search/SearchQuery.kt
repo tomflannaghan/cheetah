@@ -2,7 +2,6 @@ package com.flannaghan.cheetah.common.search
 
 import com.flannaghan.cheetah.common.words.Word
 import java.util.*
-import java.util.regex.Pattern
 
 sealed class SearchQuery
 
@@ -14,7 +13,7 @@ data class FullTextSearchQuery(val matchPattern: String) : SearchQuery()
 /**
  * A regex query.
  */
-data class RegexSearchQuery(val pattern: Pattern) : SearchQuery()
+data class RegexSearchQuery(val pattern: String) : SearchQuery()
 
 /**
  * The and operator. Matches in order, stopping at the first false match.
@@ -29,7 +28,7 @@ fun stringToSearchQuery(string: String): SearchQuery {
     val queries = mutableListOf<SearchQuery>()
     for (line in string.lines()) {
         if (line.startsWith("s:")) fullTextTerms.add(line.substring(2))
-        else queries.add(RegexSearchQuery(Pattern.compile(line.toUpperCase(Locale.ROOT))))
+        else queries.add(RegexSearchQuery(line.toUpperCase(Locale.ROOT)))
     }
     if (fullTextTerms.isNotEmpty()) {
         queries.add(FullTextSearchQuery(fullTextTerms.joinToString(" AND ") { "\"$it\"" }))
