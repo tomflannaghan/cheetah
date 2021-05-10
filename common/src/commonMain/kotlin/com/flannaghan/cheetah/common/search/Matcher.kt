@@ -34,7 +34,7 @@ data class RegexMatcher(val pattern: String) : Matcher() {
 /**
  * Processes matches in chunks asynchronously.
  */
-data class ParallelChunkMatcher(private val matcher: Matcher, private val chunkSize: Int = 10000) : Matcher() {
+data class ParallelChunkMatcher(val matcher: Matcher, private val chunkSize: Int = 10000) : Matcher() {
     override suspend fun match(words: List<Word>): List<Boolean> = coroutineScope {
         words
             .chunked(chunkSize)
@@ -141,8 +141,8 @@ private fun parallelize(matcher: Matcher): Matcher {
  */
 private fun optimizeOrdering(matcher: Matcher): Matcher = when (matcher) {
     is RegexMatcher -> matcher
-    is ParallelChunkMatcher -> matcher
     is FullTextSearchMatcher -> matcher
+    is ParallelChunkMatcher -> ParallelChunkMatcher(optimizeOrdering(matcher.matcher))
     is AndMatcher -> AndMatcher(reorderChildrenDescending(matcher.children))
     is OrMatcher -> OrMatcher(reorderChildrenDescending(matcher.children).asReversed())
 }
@@ -150,7 +150,7 @@ private fun optimizeOrdering(matcher: Matcher): Matcher = when (matcher) {
 private fun reorderChildrenDescending(matchers: List<Matcher>) = matchers
     .map { optimizeOrdering(it) }
     .distinct()
-    .sortedByDescending { weight(it) }
+    .sortedByDescending { println("$it, ${weight(it)}"); weight(it) }
 
 private fun weight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0

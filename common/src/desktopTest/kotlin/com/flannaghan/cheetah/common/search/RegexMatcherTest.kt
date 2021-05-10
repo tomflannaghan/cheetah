@@ -36,4 +36,41 @@ internal class RegexMatcherTest {
             )
         }
     }
+
+    @Test
+    fun optimiseNoFTS() {
+        assertEquals(
+            ParallelChunkMatcher(
+                AndMatcher(
+                    RegexMatcher("XXX"),
+                    RegexMatcher("X"),
+                )
+            ),
+            optimize(
+                AndMatcher(
+                    RegexMatcher("X"),
+                    RegexMatcher("XXX"),
+                )
+            )
+        )
+    }
+
+    @Test
+    fun optimiseFTS() {
+        @Suppress("UNUSED_PARAMETER")
+        fun fts(query: String, words: List<Word>) = words
+
+        assertEquals(
+            AndMatcher(
+                FullTextSearchMatcher(::fts, "hello"),
+                ParallelChunkMatcher(RegexMatcher("XXX")),
+            ),
+            optimize(
+                AndMatcher(
+                    RegexMatcher("XXX"),
+                    FullTextSearchMatcher(::fts, "hello"),
+                )
+            )
+        )
+    }
 }
