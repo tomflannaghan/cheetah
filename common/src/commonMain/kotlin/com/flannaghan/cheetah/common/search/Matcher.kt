@@ -66,6 +66,8 @@ data class FullTextSearchMatcher(
  * Applies an AND operator to the children. Stops trying a word after the first failure.
  */
 data class AndMatcher(override val children: List<Matcher>) : Matcher() {
+    constructor(vararg children: Matcher) : this(children.asList())
+
     override suspend fun match(words: List<Word>): List<Boolean> {
         val wordToIndex = words.withIndex().associateBy({ it.value }, { it.index })
         var remainingWords = words
@@ -84,6 +86,8 @@ data class AndMatcher(override val children: List<Matcher>) : Matcher() {
  * Applies the OR operator. Stops trying a word after the first success.
  */
 data class OrMatcher(override val children: List<Matcher>) : Matcher() {
+    constructor(vararg children: Matcher) : this(children.asList())
+
     override suspend fun match(words: List<Word>): List<Boolean> {
         val matches = MutableList(words.size) { false }
         val wordToIndex = words.withIndex().associateBy({ it.value }, { it.index })

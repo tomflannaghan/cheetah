@@ -18,7 +18,9 @@ data class RegexSearchQuery(val pattern: String) : SearchQuery()
 /**
  * The and operator. Matches in order, stopping at the first false match.
  */
-data class AndSearchQuery(val children: List<SearchQuery>) : SearchQuery()
+data class AndSearchQuery(val children: List<SearchQuery>) : SearchQuery() {
+    constructor(vararg children: SearchQuery) : this(children.asList())
+}
 
 /**
  * Given a string, split into lines and parse each one, producing a search query. Lines are ANDed together.

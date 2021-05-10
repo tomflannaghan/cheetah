@@ -19,11 +19,9 @@ internal class SearchQueryKtTest {
     fun testMultiline() {
         assertEquals(
             AndSearchQuery(
-                listOf(
-                    RegexSearchQuery("A"),
-                    RegexSearchQuery("B"),
-                    FullTextSearchQuery("\"C\" AND \"D\"")
-                )
+                RegexSearchQuery("A"),
+                RegexSearchQuery("B"),
+                FullTextSearchQuery("\"C\" AND \"D\"")
             ),
             stringToSearchQuery(
                 """
@@ -39,11 +37,9 @@ internal class SearchQueryKtTest {
     @Test
     fun testToMatcher() {
         val query = AndSearchQuery(
-            listOf(
-                RegexSearchQuery("..A."),
-                AndSearchQuery(
-                    listOf(FullTextSearchQuery(""), RegexSearchQuery("B"))
-                ),
+            RegexSearchQuery("..A."),
+            AndSearchQuery(
+                listOf(FullTextSearchQuery(""), RegexSearchQuery("B"))
             )
         )
 
@@ -52,13 +48,8 @@ internal class SearchQueryKtTest {
 
         assertEquals(
             AndMatcher(
-                listOf(
-                    RegexMatcher("..A."),
-                    AndMatcher(
-                        listOf(FullTextSearchMatcher(::fts, ""), RegexMatcher("B"))
-                    )
-
-                )
+                RegexMatcher("..A."),
+                AndMatcher(FullTextSearchMatcher(::fts, ""), RegexMatcher("B"))
             ),
             searchQueryToMatcher(query, ::fts)
         )
