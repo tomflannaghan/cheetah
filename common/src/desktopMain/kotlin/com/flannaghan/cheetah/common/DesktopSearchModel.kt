@@ -3,6 +3,7 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import com.flannaghan.cheetah.common.search.SearchResult
 import kotlinx.coroutines.CoroutineScope
 
 class DesktopSearchModel(context: ApplicationContext, scope: CoroutineScope) : SearchModel(context, scope) {

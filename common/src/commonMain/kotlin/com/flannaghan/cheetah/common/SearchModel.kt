@@ -3,6 +3,8 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import com.flannaghan.cheetah.common.datasource.dataSources
+import com.flannaghan.cheetah.common.search.SearchResult
+import com.flannaghan.cheetah.common.search.search
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.*
 

@@ -1,4 +1,4 @@
-package com.flannaghan.cheetah.common
+package com.flannaghan.cheetah.common.search
 
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.runBlocking

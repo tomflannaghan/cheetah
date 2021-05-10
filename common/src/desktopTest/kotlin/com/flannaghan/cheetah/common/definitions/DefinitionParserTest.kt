@@ -78,7 +78,7 @@ internal class DefinitionParserTest {
                     OrderedListItem(
                         1, listOf(
                             Text("Hello "),
-                            Link("I'm a link {{not a label}}"),
+                            Link("I'm a link not a label"),
                             Text(" and some text "),
                             Label(listOf(Text("and a label "), Link("with link"))),
                             Text(" !")
