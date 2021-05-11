@@ -1,6 +1,5 @@
 package com.flannaghan.cheetah.common.search
 
-import com.flannaghan.cheetah.common.words.Word
 import java.util.*
 
 sealed class SearchQuery
@@ -49,17 +48,11 @@ fun stringToSearchQuery(string: String): SearchQuery {
 /**
  * Construct a matcher from a search query.
  */
-fun searchQueryToMatcher(
-    query: SearchQuery,
-    fullTextSearch: (suspend (String, List<Word>) -> List<Word>)? = null
-): Matcher {
+fun searchQueryToMatcher(query: SearchQuery): Matcher {
     return when (query) {
-        is FullTextSearchQuery -> FullTextSearchMatcher(
-            fullTextSearch ?: error("No full text search provider found"),
-            query.matchPattern
-        )
+        is FullTextSearchQuery -> FullTextSearchMatcher(query.matchPattern)
         is RegexSearchQuery -> RegexMatcher(query.pattern)
-        is AndSearchQuery -> AndMatcher(query.children.map { searchQueryToMatcher(it, fullTextSearch) })
+        is AndSearchQuery -> AndMatcher(query.children.map { searchQueryToMatcher(it) })
         is CustomPatternSearchQuery -> CustomPatternMatcher(parseCustomPattern(query.pattern))
     }
 }

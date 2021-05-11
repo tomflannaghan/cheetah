@@ -7,16 +7,18 @@ import org.junit.jupiter.api.Test
 
 internal class SearchKtTest {
 
-    private val sampleWords = listOf(
-        Word("hello", "HELLO"),
-        Word("a b-c", "ABC"),
-        Word("agc", "AGC"),
+    private val sampleContext = SearchContext(
+        listOf(
+            Word("hello", "HELLO"),
+            Word("a b-c", "ABC"),
+            Word("agc", "AGC"),
+        )
     )
 
     @Test
     fun simpleSearch() {
         runBlocking {
-            val result = search(sampleWords, "a.c")
+            val result = search("a.c", sampleContext)
             assertTrue(result.success)
             assertEquals(listOf("a b-c", "agc"), result.words.map { it.string })
         }
@@ -25,7 +27,7 @@ internal class SearchKtTest {
     @Test
     fun failSearch() {
         runBlocking {
-            val result = search(sampleWords, "a.c[")
+            val result = search("a.c[", sampleContext)
             assertFalse(result.success)
             assertEquals(listOf<String>(), result.words.map { it.string })
         }
@@ -34,7 +36,7 @@ internal class SearchKtTest {
     @Test
     fun andSearch() {
         runBlocking {
-            val result = search(sampleWords, "a.c\n.b.")
+            val result = search("a.c\n.b.", sampleContext)
             assertTrue(result.success)
             assertEquals(listOf("a b-c"), result.words.map { it.string })
         }

@@ -10,16 +10,19 @@ import java.util.regex.Pattern
  * Pattern matches a given word. Works entirely with the entry form of the word, returning a boolean.
  */
 sealed class Matcher {
-    abstract suspend fun match(words: List<Word>): List<Boolean>
+    abstract suspend fun match(context: SearchContext, words: List<Word> = context.words): List<Boolean>
     fun <T> visit(block: (Matcher) -> T): List<T> = listOf(block(this)) + children.map { block(it) }
     abstract val children: List<Matcher>
+
+    suspend fun matchingWords(context: SearchContext, words: List<Word> = context.words) =
+        match(context, words).zip(words).filter { it.first }.map { it.second }
 }
 
 /**
  * Standard regex matching.
  */
 data class RegexMatcher(val pattern: String) : Matcher() {
-    override suspend fun match(words: List<Word>): List<Boolean> {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         val matcher = Pattern.compile(pattern).matcher("")
         return words.map {
             matcher.reset(it.entry)
@@ -35,10 +38,10 @@ data class RegexMatcher(val pattern: String) : Matcher() {
  * Processes matches in chunks asynchronously.
  */
 data class ParallelChunkMatcher(val matcher: Matcher, private val chunkSize: Int = 10000) : Matcher() {
-    override suspend fun match(words: List<Word>): List<Boolean> = coroutineScope {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> = coroutineScope {
         words
             .chunked(chunkSize)
-            .map { chunk -> async { matcher.match(chunk) } }
+            .map { chunk -> async { matcher.match(context, chunk) } }
             .awaitAll().flatten()
     }
 
@@ -49,13 +52,10 @@ data class ParallelChunkMatcher(val matcher: Matcher, private val chunkSize: Int
 /**
  * Full text search using the sqlite WordDatabase schema.
  */
-data class FullTextSearchMatcher(
-    private val fullTextSearch: suspend (String, List<Word>) -> List<Word>,
-    private val matchQuery: String
-) : Matcher() {
-    override suspend fun match(words: List<Word>): List<Boolean> {
+data class FullTextSearchMatcher(private val matchQuery: String) : Matcher() {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         if (words.isEmpty()) return emptyList()
-        val ftsResults = fullTextSearch(matchQuery, words).toSet()
+        val ftsResults = context.fullTextSearch?.invoke(matchQuery, words)?.toSet() ?: error("No FTS found")
         return words.map { it in ftsResults }
     }
 
@@ -67,7 +67,7 @@ data class FullTextSearchMatcher(
  */
 data class CustomPatternMatcher(private val pattern: CustomPattern) : Matcher() {
     override val children = emptyList<Matcher>()
-    override suspend fun match(words: List<Word>): List<Boolean> {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         val evaluator = CustomPatternEvaluator(pattern)
         return words.map { evaluator.match(it.entry) }
     }
@@ -79,11 +79,11 @@ data class CustomPatternMatcher(private val pattern: CustomPattern) : Matcher() 
 data class AndMatcher(override val children: List<Matcher>) : Matcher() {
     constructor(vararg children: Matcher) : this(children.asList())
 
-    override suspend fun match(words: List<Word>): List<Boolean> {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         val wordToIndex = words.withIndex().associateBy({ it.value }, { it.index })
         var remainingWords = words
         for (matcher in children) {
-            remainingWords = matcher.match(remainingWords).zip(remainingWords).filter { it.first }.map { it.second }
+            remainingWords = matcher.matchingWords(context, remainingWords)
         }
         val matches = MutableList(words.size) { false }
         for (word in remainingWords) {
@@ -99,13 +99,13 @@ data class AndMatcher(override val children: List<Matcher>) : Matcher() {
 data class OrMatcher(override val children: List<Matcher>) : Matcher() {
     constructor(vararg children: Matcher) : this(children.asList())
 
-    override suspend fun match(words: List<Word>): List<Boolean> {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         val matches = MutableList(words.size) { false }
         val wordToIndex = words.withIndex().associateBy({ it.value }, { it.index })
         var remainingWords = words
         for (matcher in children) {
             val newRemaining = mutableListOf<Word>()
-            for ((match, word) in matcher.match(remainingWords).zip(remainingWords)) {
+            for ((match, word) in matcher.match(context, remainingWords).zip(remainingWords)) {
                 if (match) matches[wordToIndex[word]!!] = true
                 else newRemaining.add(word)
             }

@@ -1,6 +1,5 @@
 package com.flannaghan.cheetah.common.search
 
-import com.flannaghan.cheetah.common.words.Word
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -42,16 +41,12 @@ internal class SearchQueryKtTest {
                 listOf(FullTextSearchQuery(""), RegexSearchQuery("B"))
             )
         )
-
-        @Suppress("RedundantSuspendModifier", "UNUSED_PARAMETER")
-        suspend fun fts(query: String, words: List<Word>) = words
-
         assertEquals(
             AndMatcher(
                 RegexMatcher("..A."),
-                AndMatcher(FullTextSearchMatcher(::fts, ""), RegexMatcher("B"))
+                AndMatcher(FullTextSearchMatcher(""), RegexMatcher("B"))
             ),
-            searchQueryToMatcher(query, ::fts)
+            searchQueryToMatcher(query)
         )
 
     }

@@ -3,6 +3,7 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import com.flannaghan.cheetah.common.datasource.dataSources
+import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.search.SearchResult
 import com.flannaghan.cheetah.common.search.search
 import com.flannaghan.cheetah.common.words.Word
@@ -48,12 +49,14 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
         if (query == currentJobQuery) return@coroutineScope
         searchLauncher.launch(this) {
             val newResult = withContext(backgroundContext()) {
-                search(getAllWords(), query) { query, words ->
+                val searchContext = SearchContext(
+                    getAllWords(),
                     dataSources.firstOrNull { it.definitionSearcher != null }
-                        ?.definitionSearcher
-                        ?.fullTextSearch(context, words, query)
-                        ?: return@search words
-                }
+                        ?.definitionSearcher?.let {
+                            { query, words -> it.fullTextSearch(context, words, query) }
+                        }
+                )
+                search(query, searchContext)
             }
             updateResult(newResult)
         }

@@ -12,7 +12,7 @@ internal class MatcherTest {
         runBlocking {
             assertEquals(
                 listOf(true, false, true),
-                matcher.match(listOf("AQC", "AOO", "ABC").map { Word("?", it) })
+                matcher.match(SearchContext(listOf("AQC", "AOO", "ABC").map { Word("?", it) }))
             )
         }
     }
@@ -22,7 +22,10 @@ internal class MatcherTest {
         val matcher = ParallelChunkMatcher(RegexMatcher(".."), 10)
         val entries = (1..10).flatMap { listOf("A", "B", "C", "AA", "BB", "CC") }.shuffled()
         runBlocking {
-            assertEquals(entries.map { it.length == 2 }, matcher.match(entries.map { Word("?", it) }))
+            assertEquals(
+                entries.map { it.length == 2 },
+                matcher.match(SearchContext(entries.map { Word("?", it) }))
+            )
         }
     }
 
@@ -32,7 +35,7 @@ internal class MatcherTest {
         runBlocking {
             assertEquals(
                 listOf(false, true, false, false),
-                matcher.match(listOf("1", "4", "7", "XXX").map { Word("?", it) })
+                matcher.match(SearchContext(listOf("1", "4", "7", "XXX").map { Word("?", it) }))
             )
         }
     }
@@ -58,18 +61,15 @@ internal class MatcherTest {
 
     @Test
     fun optimiseFTS() {
-        @Suppress("UNUSED_PARAMETER")
-        fun fts(query: String, words: List<Word>) = words
-
         assertEquals(
             AndMatcher(
-                FullTextSearchMatcher(::fts, "hello"),
+                FullTextSearchMatcher("hello"),
                 ParallelChunkMatcher(RegexMatcher("XXX")),
             ),
             optimize(
                 AndMatcher(
                     RegexMatcher("XXX"),
-                    FullTextSearchMatcher(::fts, "hello"),
+                    FullTextSearchMatcher("hello"),
                 )
             )
         )
