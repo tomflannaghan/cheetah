@@ -47,4 +47,32 @@ internal class CustomPatternEvaluatorTest {
         assertFalse(evaluator.match("H"))
         assertFalse(evaluator.match("HIT"))
     }
+
+    @Test
+    fun misprint() {
+        val pattern = CustomPattern(Letter('H'), Letter('I'), Dot, misprints = 1)
+        val evaluator = CustomPatternEvaluator(pattern)
+        assertFalse(evaluator.match("HI"))
+        assertFalse(evaluator.match("HIT")) // No misprint - an actual match.
+        assertTrue(evaluator.match("JIT"))
+        assertTrue(evaluator.match("HAT"))
+        assertFalse(evaluator.match("SAT")) // Two misprints.
+    }
+
+    @Test
+    fun misprintAnagrams() {
+        val pattern = CustomPattern(
+            Letter('H'),
+            Anagram(mapOf('A' to 1, 'B' to 2), 1),
+            Letter('T'),
+            misprints = 2
+        )
+        val evaluator = CustomPatternEvaluator(pattern)
+        assertFalse(evaluator.match("HABBQT")) // Exact match.
+        assertFalse(evaluator.match("JABBQT")) // 1 misprint.
+        assertTrue(evaluator.match("JABBQM")) // 2 misprints in the letters.
+        assertTrue(evaluator.match("JABMQT")) // 1 in letter, 1 in anag.
+        assertTrue(evaluator.match("HABMQZ")) // 1 in letter, 1 in anag.
+        assertTrue(evaluator.match("HAVMQT")) // 2 in anag.
+    }
 }

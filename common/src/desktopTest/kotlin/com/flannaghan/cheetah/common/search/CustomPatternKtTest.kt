@@ -11,8 +11,9 @@ internal class CustomPatternKtTest {
                 Anagram(mapOf('A' to 1, 'B' to 2), 2),
                 Letter('F'), Dot, Dot, Letter('D'),
                 Anagram(mapOf('A' to 1, 'D' to 1), 0),
+                misprints = 2
             ),
-            parseCustomPattern("/AB.B./F..D/AD")
+            parseCustomPattern("``/AB.B./F..D/AD")
         )
     }
 }

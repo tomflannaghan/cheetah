@@ -36,7 +36,7 @@ fun stringToSearchQuery(string: String): SearchQuery {
     for (line in string.lines()) {
         when {
             line.startsWith("s:") -> fullTextTerms.add(line.substring(2))
-            "/" in line -> queries.add(CustomPatternSearchQuery(line.toUpperCase(Locale.ROOT)))
+            '/' in line || '`' in line -> queries.add(CustomPatternSearchQuery(line.toUpperCase(Locale.ROOT)))
             else -> queries.add(RegexSearchQuery(line.toUpperCase(Locale.ROOT)))
         }
     }

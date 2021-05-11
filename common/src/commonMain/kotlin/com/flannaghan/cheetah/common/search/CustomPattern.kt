@@ -4,8 +4,8 @@ package com.flannaghan.cheetah.common.search
  * Our custom pattern. Regex-like but cut down in some respects, and more fully featured in others.
  * - Anagrams
  */
-data class CustomPattern(val components: List<Component>) {
-    constructor(vararg components: Component) : this(components.asList())
+data class CustomPattern(val components: List<Component>, val misprints: Int = 0) {
+    constructor(vararg components: Component, misprints: Int = 0) : this(components.asList(), misprints)
 }
 
 sealed class Component
@@ -15,6 +15,12 @@ data class Anagram(val letterCounts: Map<Char, Int>, val numberOfDots: Int) : Co
 object Dot : Component()
 
 fun parseCustomPattern(string: String): CustomPattern {
+    // Handle misprints.
+    if (string.startsWith('`')) {
+        val stringNoBackticks = string.trimStart('`')
+        return parseCustomPattern(stringNoBackticks).copy(misprints = string.length - stringNoBackticks.length)
+    }
+    // Otherwise, parse with no misprints.
     val letterCounts = mutableMapOf<Char, Int>()
     var dotCount = 0
     val components = mutableListOf<Component>()
@@ -48,23 +54,35 @@ fun parseCustomPattern(string: String): CustomPattern {
 private data class State(
     var stringPosition: Int,
     var patternPosition: Int,
-    var anagramState: AnagramState?
+    var anagramState: AnagramState?,
+    var misprints: Int,
 )
 
 private data class AnagramState(
     val remainingLetterCounts: MutableMap<Char, Int>,
     var numberOfDots: Int,
+    var misprintsConsumed: Int,
 )
 
 
-enum class ComponentMatch { NO_MATCH, COMPLETE, PARTIAL }
+private data class ComponentMatch(val complete: Boolean, val match: Boolean) {
+    companion object {
+        val COMPLETE = ComponentMatch(complete = true, match = true)
+        val PARTIAL = ComponentMatch(complete = false, match = true)
+        val NO_COMPLETE = ComponentMatch(complete = true, match = false)
+        val NO_PARTIAL = ComponentMatch(complete = false, match = false)
+    }
+}
+
 
 private fun matchLetter(component: Component, c: Char, state: State): ComponentMatch {
     return when (component) {
-        is Letter -> if (component.letter == c) ComponentMatch.COMPLETE else ComponentMatch.NO_MATCH
+        is Letter -> if (component.letter == c) ComponentMatch.COMPLETE else ComponentMatch.NO_COMPLETE
         is Anagram -> {
             if (state.anagramState == null) {
-                state.anagramState = AnagramState(component.letterCounts.toMutableMap(), component.numberOfDots)
+                state.anagramState = AnagramState(
+                    component.letterCounts.toMutableMap(), component.numberOfDots, 0
+                )
             }
             matchLetterAnagram(c, state.anagramState!!)
         }
@@ -78,7 +96,7 @@ private fun matchLetter(component: Component, c: Char, state: State): ComponentM
  */
 private fun matchLetterAnagram(c: Char, anagramState: AnagramState): ComponentMatch {
     val currentValue = anagramState.remainingLetterCounts[c]
-    var match = false
+    val match: Boolean
     if (currentValue != null && currentValue != 0) {
         // Consume the letter.
         anagramState.remainingLetterCounts[c] = currentValue - 1
@@ -87,12 +105,18 @@ private fun matchLetterAnagram(c: Char, anagramState: AnagramState): ComponentMa
         // Can we use up a dot?
         anagramState.numberOfDots -= 1
         match = true
+    } else {
+        anagramState.misprintsConsumed++
+        match = false
     }
-    // Now are we complete or partially done?
-    val done = anagramState.remainingLetterCounts.values.sum() == 0 && anagramState.numberOfDots == 0
+    // Now are we complete or partially done? We're done if the number of letters remaining equals the misprints
+    // this anagram has consumed.
+    val charsRemaining = anagramState.remainingLetterCounts.values.sum() + anagramState.numberOfDots
+    val done = charsRemaining == anagramState.misprintsConsumed
     return when {
-        !match -> ComponentMatch.NO_MATCH
-        done -> ComponentMatch.COMPLETE
+        !match && done -> ComponentMatch.NO_COMPLETE
+        !match && !done -> ComponentMatch.NO_PARTIAL
+        match && done -> ComponentMatch.COMPLETE
         else -> ComponentMatch.PARTIAL
     }
 }
@@ -101,26 +125,31 @@ private fun matchLetterAnagram(c: Char, anagramState: AnagramState): ComponentMa
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
     private fun match(chars: List<Char>): Boolean {
         val checkpoints = ArrayDeque<State>()
-        checkpoints.addLast(State(0, 0, null))
+        checkpoints.addLast(State(0, 0, null, pattern.misprints))
         while (checkpoints.size > 0) {
             val current = checkpoints.last()
-            // If we simultaneously reach the end of both, we're done. But if we reach either
-            // end without the other, return false.
+            // If we simultaneously reach the end of both, and we've used up all of the misprints, we're done.
+            // But if we reach either end without the other, return false.
             if (current.patternPosition == pattern.components.size) {
-                return current.stringPosition == chars.size
+                return current.stringPosition == chars.size && current.misprints == 0
             } else if (current.stringPosition == chars.size) {
                 return false
             }
             // Otherwise, we try to consume the next char and pattern.
             val char = chars[current.stringPosition]
             val component = pattern.components[current.patternPosition]
-            when (matchLetter(component, char, current)) {
-                ComponentMatch.NO_MATCH -> checkpoints.removeLast()
-                ComponentMatch.COMPLETE -> {
+            var result = matchLetter(component, char, current)
+            if (!result.match && current.misprints > 0) {
+                current.misprints--
+                result = result.copy(match = true)
+            }
+            when {
+                !result.match -> checkpoints.removeLast()
+                result.complete -> {
                     current.patternPosition += 1
                     current.stringPosition += 1
                 }
-                ComponentMatch.PARTIAL -> {
+                else -> {
                     current.stringPosition += 1
                 }
             }

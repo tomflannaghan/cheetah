@@ -18,6 +18,7 @@ suspend fun search(
         success = true
     } catch (e: Exception) {
         // Reset matches. In case of error we report no matches.
+            println(e)
         matches = emptyList()
     }
 
