@@ -3,6 +3,7 @@ package com.flannaghan.cheetah.common.search
 /**
  * Our custom pattern. Regex-like but cut down in some respects, and more fully featured in others.
  * - Anagrams
+ * - Misprints
  */
 data class CustomPattern(val components: List<Component>, val misprints: Int = 0) {
     constructor(vararg components: Component, misprints: Int = 0) : this(components.asList(), misprints)
