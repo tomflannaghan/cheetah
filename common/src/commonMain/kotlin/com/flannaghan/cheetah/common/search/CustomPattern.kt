@@ -115,7 +115,7 @@ private fun newState(state: State, matched: Boolean, complete: Boolean, mutateEx
 }
 
 
-private fun matchLetter(context: SearchContext, component: Component, c: Char, state: State): List<State> {
+private suspend fun matchLetter(context: SearchContext, component: Component, c: Char, state: State): List<State> {
     return when (component) {
         is Letter -> {
             if (component.letter == c) {
@@ -135,7 +135,7 @@ private fun matchLetter(context: SearchContext, component: Component, c: Char, s
         Dot -> listOfNotNull(newState(state, matched = true, complete = true, mutateExisting = true))
         is SubWord -> {
             val subWordState = state.subWordState ?: SubWordState(
-                if (component.backwards) context.reversePrefixSearchTree else context.prefixSearchTree
+                context.getPrefixSearchTree(component.backwards)
             )
             if (state.subWordState == null) {
                 state.subWordState = subWordState
@@ -199,7 +199,7 @@ private fun matchLetterAnagram(c: Char, state: State, anagramState: AnagramState
 
 
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
-    private fun match(context: SearchContext, chars: List<Char>): Boolean {
+    private suspend fun match(context: SearchContext, chars: List<Char>): Boolean {
         val states = ArrayDeque<State>()
         states.addLast(State(0, 0, null, null, pattern.misprints))
         while (states.size > 0) {
@@ -220,5 +220,5 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
         return false
     }
 
-    fun match(context: SearchContext, string: String) = match(context, string.toList())
+    suspend fun match(context: SearchContext, string: String) = match(context, string.toList())
 }

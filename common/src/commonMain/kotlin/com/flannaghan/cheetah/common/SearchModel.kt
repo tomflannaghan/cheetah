@@ -22,6 +22,15 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
     private val dataSources = dataSources(context)
 
     private val allWordsDeferred = scope.async { populateAllWords() }
+    private val searchContextDeferred = scope.async {
+        SearchContext(
+            getAllWords(),
+            dataSources.firstOrNull { it.definitionSearcher != null }
+                ?.definitionSearcher?.let {
+                    { query, words -> it.fullTextSearch(context, words, query) }
+                }
+        )
+    }
 
     abstract fun updateQuery(query: String)
     abstract fun updateResult(result: SearchResult)
@@ -49,14 +58,7 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
         if (query == currentJobQuery) return@coroutineScope
         searchLauncher.launch(this) {
             val newResult = withContext(backgroundContext()) {
-                val searchContext = SearchContext(
-                    getAllWords(),
-                    dataSources.firstOrNull { it.definitionSearcher != null }
-                        ?.definitionSearcher?.let {
-                            { query, words -> it.fullTextSearch(context, words, query) }
-                        }
-                )
-                search(query, searchContext)
+                search(query, searchContextDeferred.await())
             }
             updateResult(newResult)
         }
