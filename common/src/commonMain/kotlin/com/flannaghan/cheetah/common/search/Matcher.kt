@@ -63,6 +63,17 @@ data class FullTextSearchMatcher(
 }
 
 /**
+ * Our custom pattern matcher.
+ */
+data class CustomPatternMatcher(private val pattern: CustomPattern) : Matcher() {
+    override val children = emptyList<Matcher>()
+    override suspend fun match(words: List<Word>): List<Boolean> {
+        val evaluator = CustomPatternEvaluator(pattern)
+        return words.map { evaluator.match(it.entry) }
+    }
+}
+
+/**
  * Applies an AND operator to the children. Stops trying a word after the first failure.
  */
 data class AndMatcher(override val children: List<Matcher>) : Matcher() {
@@ -126,6 +137,7 @@ private fun parallelize(matcher: Matcher): Matcher {
             is RegexMatcher -> matcher
             is ParallelChunkMatcher -> matcher
             is FullTextSearchMatcher -> matcher
+            is CustomPatternMatcher -> matcher
             is AndMatcher -> AndMatcher(matcher.children.map { parallelize(it) })
             is OrMatcher -> OrMatcher(matcher.children.map { parallelize(it) })
         }
@@ -142,18 +154,27 @@ private fun parallelize(matcher: Matcher): Matcher {
 private fun optimizeOrdering(matcher: Matcher): Matcher = when (matcher) {
     is RegexMatcher -> matcher
     is FullTextSearchMatcher -> matcher
+    is CustomPatternMatcher -> matcher
     is ParallelChunkMatcher -> ParallelChunkMatcher(optimizeOrdering(matcher.matcher))
-    is AndMatcher -> AndMatcher(reorderChildrenDescending(matcher.children))
-    is OrMatcher -> OrMatcher(reorderChildrenDescending(matcher.children).asReversed())
+    is AndMatcher -> AndMatcher(reorderChildrenDescending(matcher.children, ::andWeight))
+    is OrMatcher -> OrMatcher(reorderChildrenDescending(matcher.children, ::orWeight))
 }
 
-private fun reorderChildrenDescending(matchers: List<Matcher>) = matchers
+private fun reorderChildrenDescending(matchers: List<Matcher>, weightFunc: (Matcher) -> Double) = matchers
     .map { optimizeOrdering(it) }
     .distinct()
-    .sortedByDescending { println("$it, ${weight(it)}"); weight(it) }
+    .sortedByDescending { weightFunc(it) }
 
-private fun weight(matcher: Matcher): Double = when (matcher) {
+private fun andWeight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is FullTextSearchMatcher -> 1000.0
-    else -> matcher.children.sumOf { weight(it) }
+    is CustomPatternMatcher -> 100.0
+    else -> matcher.children.sumOf { andWeight(it) }
+}
+
+private fun orWeight(matcher: Matcher): Double = when (matcher) {
+    is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -1.0
+    is FullTextSearchMatcher -> 1000.0
+    is CustomPatternMatcher -> 100.0
+    else -> matcher.children.sumOf { orWeight(it) }
 }

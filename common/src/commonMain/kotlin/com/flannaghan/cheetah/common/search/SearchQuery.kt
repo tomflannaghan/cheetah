@@ -16,6 +16,11 @@ data class FullTextSearchQuery(val matchPattern: String) : SearchQuery()
 data class RegexSearchQuery(val pattern: String) : SearchQuery()
 
 /**
+ * A pattern match.
+ */
+data class CustomPatternSearchQuery(val pattern: String) : SearchQuery()
+
+/**
  * The and operator. Matches in order, stopping at the first false match.
  */
 data class AndSearchQuery(val children: List<SearchQuery>) : SearchQuery() {
@@ -29,8 +34,11 @@ fun stringToSearchQuery(string: String): SearchQuery {
     val fullTextTerms = mutableListOf<String>()
     val queries = mutableListOf<SearchQuery>()
     for (line in string.lines()) {
-        if (line.startsWith("s:")) fullTextTerms.add(line.substring(2))
-        else queries.add(RegexSearchQuery(line.toUpperCase(Locale.ROOT)))
+        when {
+            line.startsWith("s:") -> fullTextTerms.add(line.substring(2))
+            "/" in line -> queries.add(CustomPatternSearchQuery(line.toUpperCase(Locale.ROOT)))
+            else -> queries.add(RegexSearchQuery(line.toUpperCase(Locale.ROOT)))
+        }
     }
     if (fullTextTerms.isNotEmpty()) {
         queries.add(FullTextSearchQuery(fullTextTerms.joinToString(" AND ") { "\"$it\"" }))
@@ -52,5 +60,6 @@ fun searchQueryToMatcher(
         )
         is RegexSearchQuery -> RegexMatcher(query.pattern)
         is AndSearchQuery -> AndMatcher(query.children.map { searchQueryToMatcher(it, fullTextSearch) })
+        is CustomPatternSearchQuery -> CustomPatternMatcher(parseCustomPattern(query.pattern))
     }
 }
