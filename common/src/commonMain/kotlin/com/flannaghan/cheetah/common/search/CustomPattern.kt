@@ -36,13 +36,15 @@ fun parseCustomPattern(string: String): CustomPattern {
                     dotCount = 0
                 }
                 '.' -> dotCount++
-                else -> letterCounts[char] = (letterCounts[char] ?: 0) + 1
+                in 'A'..'Z' -> letterCounts[char] = (letterCounts[char] ?: 0) + 1
+                else -> error("Unexpected character $char")
             }
         } else {
             when (char) {
                 '/' -> inAnagram = true
                 '.' -> components.add(Dot)
-                else -> components.add(Letter(char))
+                in 'A'..'Z' -> components.add(Letter(char))
+                else -> error("Unexpected character $char")
             }
         }
     }
@@ -125,6 +127,8 @@ private fun matchLetterAnagram(c: Char, anagramState: AnagramState): ComponentMa
 
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
     private fun match(chars: List<Char>): Boolean {
+        // Note we don't currently backtrack so these checkpoints are trivial.
+        // It'll be needed for subword matching etc though.
         val checkpoints = ArrayDeque<State>()
         checkpoints.addLast(State(0, 0, null, pattern.misprints))
         while (checkpoints.size > 0) {
