@@ -69,7 +69,7 @@ data class CustomPatternMatcher(private val pattern: CustomPattern) : Matcher() 
     override val children = emptyList<Matcher>()
     override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         val evaluator = CustomPatternEvaluator(pattern)
-        return words.map { evaluator.match(it.entry) }
+        return words.map { evaluator.match(context, it.entry) }
     }
 }
 
@@ -149,6 +149,7 @@ private fun parallelize(matcher: Matcher): Matcher {
  * Optimise AND and OR ordering.
  * 1: Put the full text search first in AND. It is independent of the input word list.
  * 2: Put regexes in decreasing order of the number of letters for AND, and increasing for OR, to maximise drop out.
+ * 3. Put any custom patterns last. They are much slower than regexes.
  * Also removes any duplicates.
  */
 private fun optimizeOrdering(matcher: Matcher): Matcher = when (matcher) {
@@ -168,13 +169,13 @@ private fun reorderChildrenDescending(matchers: List<Matcher>, weightFunc: (Matc
 private fun andWeight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is FullTextSearchMatcher -> 1000.0
-    is CustomPatternMatcher -> 100.0
+    is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { andWeight(it) }
 }
 
 private fun orWeight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -1.0
     is FullTextSearchMatcher -> 1000.0
-    is CustomPatternMatcher -> 100.0
+    is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { orWeight(it) }
 }
