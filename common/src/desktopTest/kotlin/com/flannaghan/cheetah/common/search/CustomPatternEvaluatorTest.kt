@@ -17,13 +17,25 @@ internal class CustomPatternEvaluatorTest {
 
     @Test
     fun anagram() {
-        val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'S' to 2)))
+        val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'S' to 2), 0))
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match("SAS"))
         assertTrue(evaluator.match("ASS"))
         assertFalse(evaluator.match("SA"))
         assertFalse(evaluator.match("SASS"))
         assertFalse(evaluator.match("SAQ"))
+    }
+
+    @Test
+    fun dottedAnagram() {
+        val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'S' to 2), 2))
+        val evaluator = CustomPatternEvaluator(pattern)
+        assertFalse(evaluator.match("SAS"))
+        assertFalse(evaluator.match("ASS"))
+        assertFalse(evaluator.match("SA"))
+        assertTrue(evaluator.match("SASSA"))
+        assertTrue(evaluator.match("SAQTS"))
+        assertFalse(evaluator.match("SAQTV"))
     }
 
     @Test

@@ -11,11 +11,12 @@ data class CustomPattern(val components: List<Component>) {
 sealed class Component
 
 data class Letter(val letter: Char) : Component()
-data class Anagram(val letterCounts: Map<Char, Int>) : Component()
+data class Anagram(val letterCounts: Map<Char, Int>, val numberOfDots: Int) : Component()
 object Dot : Component()
 
 fun parseCustomPattern(string: String): CustomPattern {
     val letterCounts = mutableMapOf<Char, Int>()
+    var dotCount = 0
     val components = mutableListOf<Component>()
     var inAnagram = false
     for (char in string) {
@@ -23,10 +24,11 @@ fun parseCustomPattern(string: String): CustomPattern {
             when (char) {
                 '/' -> {
                     inAnagram = false
-                    components.add(Anagram(letterCounts.toMap()))
+                    components.add(Anagram(letterCounts.toMap(), dotCount))
                     letterCounts.clear()
+                    dotCount = 0
                 }
-                '.' -> error("Can't have . inside an anagram")
+                '.' -> dotCount++
                 else -> letterCounts[char] = (letterCounts[char] ?: 0) + 1
             }
         } else {
@@ -38,7 +40,7 @@ fun parseCustomPattern(string: String): CustomPattern {
         }
     }
     if (inAnagram) {
-        components.add(Anagram(letterCounts))
+        components.add(Anagram(letterCounts, dotCount))
     }
     return CustomPattern(components)
 }
@@ -46,8 +48,14 @@ fun parseCustomPattern(string: String): CustomPattern {
 private data class State(
     var stringPosition: Int,
     var patternPosition: Int,
-    var remainingLetterCounts: MutableMap<Char, Int>?
+    var anagramState: AnagramState?
 )
+
+private data class AnagramState(
+    val remainingLetterCounts: MutableMap<Char, Int>,
+    var numberOfDots: Int,
+)
+
 
 enum class ComponentMatch { NO_MATCH, COMPLETE, PARTIAL }
 
@@ -55,22 +63,37 @@ private fun matchLetter(component: Component, c: Char, state: State): ComponentM
     return when (component) {
         is Letter -> if (component.letter == c) ComponentMatch.COMPLETE else ComponentMatch.NO_MATCH
         is Anagram -> {
-            if (state.remainingLetterCounts == null) {
-                state.remainingLetterCounts = component.letterCounts.toMutableMap()
+            if (state.anagramState == null) {
+                state.anagramState = AnagramState(component.letterCounts.toMutableMap(), component.numberOfDots)
             }
-            require(state.remainingLetterCounts != null)
-            if ((state.remainingLetterCounts!![c] ?: 0) > 0) {
-                val currentCount = state.remainingLetterCounts!![c]!!
-                if (currentCount == 1) state.remainingLetterCounts!! -= c
-                else state.remainingLetterCounts!![c] = currentCount - 1
-                // If the map's now empty we are done.
-                if (state.remainingLetterCounts!!.isEmpty()) {
-                    state.remainingLetterCounts = null
-                    ComponentMatch.COMPLETE
-                } else ComponentMatch.PARTIAL
-            } else ComponentMatch.NO_MATCH
+            matchLetterAnagram(c, state.anagramState!!)
         }
         Dot -> ComponentMatch.COMPLETE
+    }
+}
+
+/**
+ * Matches against c, modifying anagram state as appropriate so that if we decide to continue the match, no
+ * other state changes are required.
+ */
+private fun matchLetterAnagram(c: Char, anagramState: AnagramState): ComponentMatch {
+    val currentValue = anagramState.remainingLetterCounts[c]
+    var match = false
+    if (currentValue != null && currentValue != 0) {
+        // Consume the letter.
+        anagramState.remainingLetterCounts[c] = currentValue - 1
+        match = true
+    } else if (anagramState.numberOfDots > 0) {
+        // Can we use up a dot?
+        anagramState.numberOfDots -= 1
+        match = true
+    }
+    // Now are we complete or partially done?
+    val done = anagramState.remainingLetterCounts.values.sum() == 0 && anagramState.numberOfDots == 0
+    return when {
+        !match -> ComponentMatch.NO_MATCH
+        done -> ComponentMatch.COMPLETE
+        else -> ComponentMatch.PARTIAL
     }
 }
 
