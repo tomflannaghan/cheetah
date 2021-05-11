@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-internal class RegexMatcherTest {
+internal class MatcherTest {
     @Test
     fun regexMatch() {
         val matcher = RegexMatcher("A.C")
@@ -48,6 +48,7 @@ internal class RegexMatcherTest {
             ),
             optimize(
                 AndMatcher(
+                    RegexMatcher("X"),
                     RegexMatcher("X"),
                     RegexMatcher("XXX"),
                 )
