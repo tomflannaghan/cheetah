@@ -18,12 +18,16 @@ class SearchContext(
     private val lock = Mutex(false)
 
     suspend fun getPrefixSearchTree(backwards: Boolean): PrefixSearchNode {
-        _searchTrees[backwards]?.let { return it }
         lock.withLock {
-            val words = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
-            val tree = prefixSearchTree(words)
-            _searchTrees[backwards] = tree
-            return tree
+            val currentTree = _searchTrees[backwards]
+            return if (currentTree != null) {
+                currentTree
+            } else {
+                val words = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
+                val tree = prefixSearchTree(words)
+                _searchTrees[backwards] = tree
+                tree
+            }
         }
     }
 }
