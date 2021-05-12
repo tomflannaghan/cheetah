@@ -3,112 +3,16 @@ package com.flannaghan.cheetah.common.search.custompattern
 import com.flannaghan.cheetah.common.search.SearchContext
 
 
-private suspend fun matchLetter(context: SearchContext, component: Component, c: Char, state: State): List<State> {
-    return when (component) {
-        is Letter -> {
-            if (component.letter == c) {
-                listOfNotNull(newState(state, matched = true, complete = true, mutateExisting = true))
-            } else {
-                listOfNotNull(newState(state, matched = false, complete = true, mutateExisting = true))
-            }
-        }
-        is Anagram -> {
-            if (state.anagramState == null) {
-                state.anagramState = AnagramState(
-                    component.letterCounts.toMutableMap(), component.numberOfDots, 0
-                )
-            }
-            matchLetterAnagram(c, state, state.anagramState!!)
-        }
-        Dot -> listOfNotNull(newState(state, matched = true, complete = true, mutateExisting = true))
-        is SubWord -> {
-            val subWordState = state.subWordState ?: SubWordState(
-                context.getPrefixSearchTree(component.backwards)
-            )
-            if (state.subWordState == null) {
-                state.subWordState = subWordState
-            }
-            matchLetterSubWord(c, state, subWordState)
-        }
-        is SubWordMatch -> {
-            val subWordState = state.subWordState ?: SubWordState(
-                context.getPrefixSearchTreeForMatcher(component.matcher, component.backwards)
-            )
-            if (state.subWordState == null) {
-                state.subWordState = subWordState
-            }
-            matchLetterSubWord(c, state, subWordState)
-        }
-    }
-}
-
-/**
- * Matches against c, modifying anagram state as appropriate so that if we decide to continue the match, no
- * other state changes are required.
- */
-private fun matchLetterAnagram(c: Char, state: State, anagramState: AnagramState): List<State> {
-    val currentValue = anagramState.remainingLetterCounts[c]
-    val match: Boolean
-    if (currentValue != null && currentValue != 0) {
-        // Consume the letter.
-        anagramState.remainingLetterCounts[c] = currentValue - 1
-        match = true
-    } else if (anagramState.numberOfDots > 0) {
-        // Can we use up a dot?
-        anagramState.numberOfDots -= 1
-        match = true
-    } else {
-        anagramState.misprintsConsumed++
-        match = false
-    }
-    // Now are we complete or partially done? We're done if the number of letters remaining equals the misprints
-    // this anagram has consumed.
-    val charsRemaining = anagramState.remainingLetterCounts.values.sum() + anagramState.numberOfDots
-    val done = charsRemaining == anagramState.misprintsConsumed
-    return when {
-        !match && done -> listOfNotNull(newState(state, matched = false, complete = true, mutateExisting = true))
-        !match && !done -> listOfNotNull(newState(state, matched = false, complete = false, mutateExisting = true))
-        match && done -> listOfNotNull(newState(state, matched = true, complete = true, mutateExisting = true))
-        else -> listOfNotNull(newState(state, matched = true, complete = false, mutateExisting = true))
-    }
-}
-
-
-private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState): List<State> {
-    val newStates = mutableListOf<State?>()
-    val matchingNode = subWordState.node.children.firstOrNull { it.char == c }
-    if (matchingNode != null) {
-        val nextSubWordState = subWordState.copy(node = matchingNode)
-        if (nextSubWordState.node.isWord) {
-            state.subWordState = null
-            newStates.add(newState(state, matched = true, complete = true, mutateExisting = false))
-        }
-        state.subWordState = nextSubWordState
-        newStates.add(newState(state, matched = true, complete = false, mutateExisting = true))
-    } else {
-        for (nonMatchingNode in subWordState.node.children) {
-            if (nonMatchingNode.char == c) continue
-            val newSubWordState = subWordState.copy(node = nonMatchingNode)
-            state.subWordState = newSubWordState
-            newStates.add(newState(state, matched = false, complete = false, mutateExisting = false))
-            if (newSubWordState.node.isWord) {
-                state.subWordState = null
-                newStates.add(newState(state, matched = false, complete = true, mutateExisting = false))
-            }
-        }
-    }
-    return newStates.filterNotNull()
-}
-
 /**
  * Performs matches on a [CustomPattern]. This class is not threadsafe/concurrency-safe, so should be called
  * from within a single suspend function.
  */
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
     private val states = ArrayDeque<State>()
+    private val newStates = mutableListOf<State>()
 
     private suspend fun match(context: SearchContext, chars: List<Char>): Boolean {
-        // Clear initial state. This shouldn't happen.
+        // Clear initial state if anything is remaining.
         if (states.size > 0) states.clear()
         // Place the initial state in.
         states.addLast(State(0, 0, null, null, pattern.misprints))
@@ -123,7 +27,9 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
                 // Otherwise, if we still have chars to consume, we try to consume the next char and pattern.
                 val char = chars[current.stringPosition]
                 val component = pattern.components[current.patternPosition]
-                states.addAll(matchLetter(context, component, char, current))
+                matchLetter(context, component, char, current)
+                states.addAll(newStates)
+                newStates.clear()
             }
             // Otherwise we'll try the next state in the stack of states.
         }
@@ -131,4 +37,128 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
     }
 
     suspend fun match(context: SearchContext, string: String) = match(context, string.toList())
+
+    /**
+     * Adds a state to the list of new states. This adds [state] so [state] should not be used again once added.
+     */
+    private fun addState(state: State, matched: Boolean, complete: Boolean) {
+        var misprintConsumed = false
+        if (!matched && state.misprints > 0) {
+            // We consume a misprint if we failed to match and can do.
+            misprintConsumed = true
+            state.misprints--
+        }
+        state.stringPosition++
+        when {
+            !(matched || misprintConsumed) -> {
+                return
+            }
+            complete -> {
+                state.patternPosition++
+            }
+        }
+        newStates.add(state)
+    }
+
+    private fun addCopyState(state: State, matched: Boolean, complete: Boolean) {
+        addState(state.copy(), matched, complete)
+    }
+
+    /**
+     * Matches a single letter.
+     */
+    private suspend fun matchLetter(context: SearchContext, component: Component, c: Char, state: State) {
+        when (component) {
+            is Letter -> {
+                if (component.letter == c) {
+                    addState(state, matched = true, complete = true)
+                } else {
+                    addState(state, matched = false, complete = true)
+                }
+            }
+            is Anagram -> {
+                if (state.anagramState == null) {
+                    state.anagramState = AnagramState(
+                        component.letterCounts.toMutableMap(), component.numberOfDots, 0
+                    )
+                }
+                matchLetterAnagram(c, state, state.anagramState!!)
+            }
+            Dot -> addState(state, matched = true, complete = true)
+            is SubWord -> {
+                val subWordState = state.subWordState ?: SubWordState(
+                    context.getPrefixSearchTree(component.backwards)
+                )
+                if (state.subWordState == null) {
+                    state.subWordState = subWordState
+                }
+                matchLetterSubWord(c, state, subWordState)
+            }
+            is SubWordMatch -> {
+                val subWordState = state.subWordState ?: SubWordState(
+                    context.getPrefixSearchTreeForMatcher(component.matcher, component.backwards)
+                )
+                if (state.subWordState == null) {
+                    state.subWordState = subWordState
+                }
+                matchLetterSubWord(c, state, subWordState)
+            }
+        }
+    }
+
+    /**
+     * Matches against c, modifying anagram state as appropriate so that if we decide to continue the match, no
+     * other state changes are required.
+     */
+    private fun matchLetterAnagram(c: Char, state: State, anagramState: AnagramState) {
+        val currentValue = anagramState.remainingLetterCounts[c]
+        val match: Boolean
+        if (currentValue != null && currentValue != 0) {
+            // Consume the letter.
+            anagramState.remainingLetterCounts[c] = currentValue - 1
+            match = true
+        } else if (anagramState.numberOfDots > 0) {
+            // Can we use up a dot?
+            anagramState.numberOfDots -= 1
+            match = true
+        } else {
+            anagramState.misprintsConsumed++
+            match = false
+        }
+        // Now are we complete or partially done? We're done if the number of letters remaining equals the misprints
+        // this anagram has consumed.
+        val charsRemaining = anagramState.remainingLetterCounts.values.sum() + anagramState.numberOfDots
+        val done = charsRemaining == anagramState.misprintsConsumed
+        when {
+            !match && done -> addState(state, matched = false, complete = true)
+            !match && !done -> addState(state, matched = false, complete = false)
+            match && done -> addState(state, matched = true, complete = true)
+            else -> addState(state, matched = true, complete = false)
+        }
+    }
+
+    private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState) {
+        val matchingNode = subWordState.node.children.firstOrNull { it.char == c }
+        if (matchingNode != null) {
+            val nextSubWordState = subWordState.copy(node = matchingNode)
+            if (nextSubWordState.node.isWord) {
+                state.subWordState = null
+                addCopyState(state, matched = true, complete = true)
+            }
+            state.subWordState = nextSubWordState
+            addState(state, matched = true, complete = false)
+        } else {
+            for (nonMatchingNode in subWordState.node.children) {
+                if (nonMatchingNode.char == c) continue
+                val newSubWordState = subWordState.copy(node = nonMatchingNode)
+                state.subWordState = newSubWordState
+                addCopyState(state, matched = false, complete = false)
+                if (newSubWordState.node.isWord) {
+                    state.subWordState = null
+                    addCopyState(state, matched = false, complete = true)
+                }
+            }
+        }
+    }
+
 }
