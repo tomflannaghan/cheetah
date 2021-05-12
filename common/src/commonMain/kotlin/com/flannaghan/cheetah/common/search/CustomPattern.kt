@@ -140,28 +140,7 @@ private suspend fun matchLetter(context: SearchContext, component: Component, c:
             if (state.subWordState == null) {
                 state.subWordState = subWordState
             }
-            // Does our letter match?
-            val newStates = mutableListOf<State?>()
-            if (subWordState.node.matches(c)) {
-                val nextSubWordState = subWordState.copy(node = subWordState.node.descend(c))
-                state.subWordState = nextSubWordState
-                newStates.add(newState(state, matched = true, complete = false, mutateExisting = false))
-                if (nextSubWordState.node.isWord) {
-                    state.subWordState = null
-                    newStates.add(newState(state, matched = true, complete = true, mutateExisting = false))
-                }
-            } else {
-                for (nextC in subWordState.node.nextLetters) {
-                    val newSubWordState = subWordState.copy(node = subWordState.node.descend(nextC))
-                    state.subWordState = newSubWordState
-                    newStates.add(newState(state, matched = false, complete = false, mutateExisting = false))
-                    if (newSubWordState.node.isWord) {
-                        state.subWordState = null
-                        newStates.add(newState(state, matched = false, complete = true, mutateExisting = false))
-                    }
-                }
-            }
-            newStates.filterNotNull()
+            matchLetterSubWord(c, state, subWordState)
         }
     }
 }
@@ -195,6 +174,31 @@ private fun matchLetterAnagram(c: Char, state: State, anagramState: AnagramState
         match && done -> listOfNotNull(newState(state, matched = true, complete = true, mutateExisting = true))
         else -> listOfNotNull(newState(state, matched = true, complete = false, mutateExisting = true))
     }
+}
+
+
+private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState): List<State> {
+    val newStates = mutableListOf<State?>()
+    if (subWordState.node.matches(c)) {
+        val nextSubWordState = subWordState.copy(node = subWordState.node.descend(c))
+        state.subWordState = nextSubWordState
+        newStates.add(newState(state, matched = true, complete = false, mutateExisting = false))
+        if (nextSubWordState.node.isWord) {
+            state.subWordState = null
+            newStates.add(newState(state, matched = true, complete = true, mutateExisting = false))
+        }
+    } else {
+        for (nextC in subWordState.node.nextLetters) {
+            val newSubWordState = subWordState.copy(node = subWordState.node.descend(nextC))
+            state.subWordState = newSubWordState
+            newStates.add(newState(state, matched = false, complete = false, mutateExisting = false))
+            if (newSubWordState.node.isWord) {
+                state.subWordState = null
+                newStates.add(newState(state, matched = false, complete = true, mutateExisting = false))
+            }
+        }
+    }
+    return newStates.filterNotNull()
 }
 
 
