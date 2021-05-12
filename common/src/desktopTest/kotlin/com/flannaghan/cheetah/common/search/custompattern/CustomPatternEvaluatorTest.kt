@@ -1,5 +1,6 @@
 package com.flannaghan.cheetah.common.search.custompattern
 
+import com.flannaghan.cheetah.common.search.RegexMatcher
 import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.runBlocking
@@ -109,5 +110,20 @@ internal class CustomPatternEvaluatorTest {
         assertTrue(evaluator.match(context, "TAHT"))
         assertTrue(evaluator.match(context, "GOHT"))
         assertFalse(evaluator.match(context, "OHG"))
+        assertTrue(evaluator.match(context, "TABT"))
+    }
+
+    @Test
+    fun subWordMatch() = runBlocking {
+        val matcher = RegexMatcher("H..")
+        val pattern = CustomPattern(SubWordMatch(matcher, true), Letter('T'))
+        val evaluator = CustomPatternEvaluator(pattern)
+        context.withEvaluation {
+            assertFalse(evaluator.match(context, "TAHQ"))
+            assertTrue(evaluator.match(context, "TAHT"))
+            assertTrue(evaluator.match(context, "GOHT"))
+            assertFalse(evaluator.match(context, "OHG"))
+            assertFalse(evaluator.match(context, "TABT"))
+        }
     }
 }

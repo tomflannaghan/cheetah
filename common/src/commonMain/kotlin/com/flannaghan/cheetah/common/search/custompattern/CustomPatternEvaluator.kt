@@ -30,6 +30,15 @@ private suspend fun matchLetter(context: SearchContext, component: Component, c:
             }
             matchLetterSubWord(c, state, subWordState)
         }
+        is SubWordMatch -> {
+            val subWordState = state.subWordState ?: SubWordState(
+                context.getPrefixSearchTreeForMatcher(component.matcher, component.backwards)
+            )
+            if (state.subWordState == null) {
+                state.subWordState = subWordState
+            }
+            matchLetterSubWord(c, state, subWordState)
+        }
     }
 }
 

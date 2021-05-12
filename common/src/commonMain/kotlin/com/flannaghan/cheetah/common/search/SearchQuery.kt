@@ -34,10 +34,12 @@ fun stringToSearchQuery(string: String): SearchQuery {
     val fullTextTerms = mutableListOf<String>()
     val queries = mutableListOf<SearchQuery>()
     for (line in string.lines()) {
-        when {
-            line.startsWith("s:") -> fullTextTerms.add(line.substring(2))
-            "/`<>".any { it in line } -> queries.add(CustomPatternSearchQuery(line.toUpperCase(Locale.ROOT)))
-            else -> queries.add(RegexSearchQuery(line.toUpperCase(Locale.ROOT)))
+        for (term in line.toUpperCase(Locale.ROOT).split(';')) {
+            when {
+                term.startsWith("S:") -> fullTextTerms.add(term.substring(2))
+                "/`<>".any { it in term } -> queries.add(CustomPatternSearchQuery(term))
+                else -> queries.add(RegexSearchQuery(term))
+            }
         }
     }
     if (fullTextTerms.isNotEmpty()) {

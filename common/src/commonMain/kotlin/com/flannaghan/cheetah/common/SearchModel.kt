@@ -58,7 +58,10 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
         if (query == currentJobQuery) return@coroutineScope
         searchLauncher.launch(this) {
             val newResult = withContext(backgroundContext()) {
-                search(query, searchContextDeferred.await())
+                val searchContext = searchContextDeferred.await()
+                searchContext.withEvaluation {
+                    search(query, searchContext)
+                }
             }
             updateResult(newResult)
         }

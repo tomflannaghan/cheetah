@@ -11,7 +11,7 @@ internal class SearchQueryKtTest {
 
     @Test
     fun testParsingFTS() {
-        assertEquals(FullTextSearchQuery("\"foo\""), stringToSearchQuery("s:foo"))
+        assertEquals(FullTextSearchQuery("\"FOO\""), stringToSearchQuery("s:foo"))
     }
 
     @Test
@@ -48,6 +48,10 @@ internal class SearchQueryKtTest {
             ),
             searchQueryToMatcher(query)
         )
+    }
 
+    @Test
+    fun parseSemicolonSplit() {
+        assertEquals(FullTextSearchQuery("\"A\" AND \"B\""), stringToSearchQuery("s:a;s:b"))
     }
 }
