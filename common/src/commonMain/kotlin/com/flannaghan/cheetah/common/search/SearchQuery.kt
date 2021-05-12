@@ -1,5 +1,6 @@
 package com.flannaghan.cheetah.common.search
 
+import com.flannaghan.cheetah.common.search.custompattern.parseCustomPattern
 import java.util.*
 
 sealed class SearchQuery

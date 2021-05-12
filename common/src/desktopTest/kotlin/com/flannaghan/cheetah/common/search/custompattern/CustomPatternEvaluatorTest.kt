@@ -1,5 +1,6 @@
-package com.flannaghan.cheetah.common.search
+package com.flannaghan.cheetah.common.search.custompattern
 
+import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse

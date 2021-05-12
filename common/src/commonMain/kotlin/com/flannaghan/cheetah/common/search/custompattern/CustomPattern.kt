@@ -1,4 +1,6 @@
-package com.flannaghan.cheetah.common.search
+package com.flannaghan.cheetah.common.search.custompattern
+
+import com.flannaghan.cheetah.common.search.SearchContext
 
 /**
  * Our custom pattern. Regex-like but cut down in some respects, and more fully featured in others.

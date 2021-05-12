@@ -1,4 +1,4 @@
-package com.flannaghan.cheetah.common.search
+package com.flannaghan.cheetah.common.search.custompattern
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

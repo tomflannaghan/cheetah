@@ -1,4 +1,4 @@
-package com.flannaghan.cheetah.common.search
+package com.flannaghan.cheetah.common.search.custompattern
 
 data class PrefixSearchNode(
     val children: List<PrefixSearchNode>,

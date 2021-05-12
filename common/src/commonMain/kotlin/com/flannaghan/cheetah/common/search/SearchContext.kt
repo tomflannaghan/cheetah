@@ -1,5 +1,7 @@
 package com.flannaghan.cheetah.common.search
 
+import com.flannaghan.cheetah.common.search.custompattern.PrefixSearchNode
+import com.flannaghan.cheetah.common.search.custompattern.prefixSearchTree
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

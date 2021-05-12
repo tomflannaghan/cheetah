@@ -1,5 +1,7 @@
 package com.flannaghan.cheetah.common.search
 
+import com.flannaghan.cheetah.common.search.custompattern.CustomPattern
+import com.flannaghan.cheetah.common.search.custompattern.CustomPatternEvaluator
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
