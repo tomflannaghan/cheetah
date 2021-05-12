@@ -48,6 +48,10 @@ class SearchContext(
 }
 
 
+/**
+ * Provides context for sharing info inside a particular search. The context exists for the lifetime of the
+ * outermost search (i.e. the full search) and is available within any sub-searches.
+ */
 internal class SearchEvaluationContext(val context: SearchContext) {
     private var matcherSearchTrees =
         DefaultDeferredMap<Pair<Matcher, Boolean>, PrefixSearchNode> { (matcher, backwards) ->
