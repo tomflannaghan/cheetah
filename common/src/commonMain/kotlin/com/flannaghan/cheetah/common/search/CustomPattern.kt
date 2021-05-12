@@ -179,8 +179,9 @@ private fun matchLetterAnagram(c: Char, state: State, anagramState: AnagramState
 
 private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState): List<State> {
     val newStates = mutableListOf<State?>()
-    if (subWordState.node.matches(c)) {
-        val nextSubWordState = subWordState.copy(node = subWordState.node.descend(c))
+    val matchingNode = subWordState.node.children.firstOrNull { it.char == c }
+    if (matchingNode != null) {
+        val nextSubWordState = subWordState.copy(node = matchingNode)
         state.subWordState = nextSubWordState
         newStates.add(newState(state, matched = true, complete = false, mutateExisting = false))
         if (nextSubWordState.node.isWord) {
@@ -188,8 +189,9 @@ private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState
             newStates.add(newState(state, matched = true, complete = true, mutateExisting = false))
         }
     } else {
-        for (nextC in subWordState.node.nextLetters) {
-            val newSubWordState = subWordState.copy(node = subWordState.node.descend(nextC))
+        for (nonMatchingNode in subWordState.node.children) {
+            if (nonMatchingNode.char == c) continue
+            val newSubWordState = subWordState.copy(node = nonMatchingNode)
             state.subWordState = newSubWordState
             newStates.add(newState(state, matched = false, complete = false, mutateExisting = false))
             if (newSubWordState.node.isWord) {

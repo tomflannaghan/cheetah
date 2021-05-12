@@ -1,14 +1,14 @@
 package com.flannaghan.cheetah.common.search
 
-data class PrefixSearchNode(private val children: Map<Char, PrefixSearchNode>, val isWord: Boolean) {
-    fun matches(c: Char) = c in children
-    fun descend(c: Char): PrefixSearchNode = children[c] ?: error("No node at $c")
-    val nextLetters get() = children.keys
-}
+data class PrefixSearchNode(
+    val children: List<PrefixSearchNode>,
+    val char: Char,
+    val isWord: Boolean
+)
 
-fun prefixSearchTree(strings: List<String>) = prefixSearchTree(strings, 0)
+fun prefixSearchTree(strings: List<String>) = prefixSearchTree(strings, ' ', 0)
 
-private fun prefixSearchTree(strings: List<String>, depth: Int): PrefixSearchNode {
+private fun prefixSearchTree(strings: List<String>, char: Char, depth: Int): PrefixSearchNode {
     val stringsByFirstLetter = mutableMapOf<Char, MutableList<String>>()
     var isWord = false
     for (string in strings) {
@@ -18,5 +18,8 @@ private fun prefixSearchTree(strings: List<String>, depth: Int): PrefixSearchNod
             isWord = true
         }
     }
-    return PrefixSearchNode(stringsByFirstLetter.mapValues { prefixSearchTree(it.value, depth + 1) }, isWord)
+    return PrefixSearchNode(
+        stringsByFirstLetter.map { prefixSearchTree(it.value, it.key, depth + 1) },
+        char, isWord
+    )
 }
