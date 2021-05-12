@@ -70,12 +70,12 @@ private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState
     val matchingNode = subWordState.node.children.firstOrNull { it.char == c }
     if (matchingNode != null) {
         val nextSubWordState = subWordState.copy(node = matchingNode)
-        state.subWordState = nextSubWordState
-        newStates.add(newState(state, matched = true, complete = false, mutateExisting = false))
         if (nextSubWordState.node.isWord) {
             state.subWordState = null
             newStates.add(newState(state, matched = true, complete = true, mutateExisting = false))
         }
+        state.subWordState = nextSubWordState
+        newStates.add(newState(state, matched = true, complete = false, mutateExisting = true))
     } else {
         for (nonMatchingNode in subWordState.node.children) {
             if (nonMatchingNode.char == c) continue
@@ -91,10 +91,17 @@ private fun matchLetterSubWord(c: Char, state: State, subWordState: SubWordState
     return newStates.filterNotNull()
 }
 
-
+/**
+ * Performs matches on a [CustomPattern]. This class is not threadsafe/concurrency-safe, so should be called
+ * from within a single suspend function.
+ */
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
+    private val states = ArrayDeque<State>()
+
     private suspend fun match(context: SearchContext, chars: List<Char>): Boolean {
-        val states = ArrayDeque<State>()
+        // Clear initial state. This shouldn't happen.
+        if (states.size > 0) states.clear()
+        // Place the initial state in.
         states.addLast(State(0, 0, null, null, pattern.misprints))
         while (states.size > 0) {
             val current = states.removeLast()
