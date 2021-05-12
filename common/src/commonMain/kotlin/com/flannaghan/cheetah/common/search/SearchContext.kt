@@ -3,6 +3,9 @@ package com.flannaghan.cheetah.common.search
 import com.flannaghan.cheetah.common.search.custompattern.PrefixSearchNode
 import com.flannaghan.cheetah.common.search.custompattern.prefixSearchTree
 import com.flannaghan.cheetah.common.words.Word
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -13,11 +16,10 @@ class SearchContext(
     val words: List<Word>,
     val fullTextSearch: (suspend (String, List<Word>) -> List<Word>)? = null
 ) {
-    private var _searchTrees = mutableMapOf<Boolean, PrefixSearchNode>()
-
-    // We request the prefix tree in multiple coroutines, so it's important that we wait until populated
-    // otherwise we'll try to construct it in multiple threads simultaneously.
-    private val lock = Mutex(false)
+    private val searchTrees = DefaultDeferredMap<Boolean, PrefixSearchNode> { backwards ->
+        val words = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
+        prefixSearchTree(words)
+    }
 
     // Certain things only need persisting for the evaluation, and should be discarded once done.
     private var evaluationContext: SearchEvaluationContext? = null
@@ -35,19 +37,8 @@ class SearchContext(
         }
     }
 
-    suspend fun getPrefixSearchTree(backwards: Boolean): PrefixSearchNode {
-        _searchTrees[backwards]?.let { return it }
-        lock.withLock {
-            val currentTree = _searchTrees[backwards]
-            return if (currentTree != null) {
-                currentTree
-            } else {
-                val words = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
-                val tree = prefixSearchTree(words)
-                _searchTrees[backwards] = tree
-                tree
-            }
-        }
+    suspend fun getPrefixSearchTree(backwards: Boolean): PrefixSearchNode = coroutineScope {
+        searchTrees.get(backwards)
     }
 
     suspend fun getPrefixSearchTreeForMatcher(matcher: Matcher, backwards: Boolean): PrefixSearchNode {
@@ -58,26 +49,38 @@ class SearchContext(
 
 
 internal class SearchEvaluationContext(val context: SearchContext) {
-    private var _matcherSearchTrees = mutableMapOf<Pair<Matcher, Boolean>, PrefixSearchNode>()
-
-    // We request the prefix tree in multiple coroutines, so it's important that we wait until populated
-    // otherwise we'll try to construct it in multiple threads simultaneously.
-    private val lock = Mutex(false)
+    private var matcherSearchTrees =
+        DefaultDeferredMap<Pair<Matcher, Boolean>, PrefixSearchNode> { (matcher, backwards) ->
+            val words = matcher.matchingWords(context)
+            val strings = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
+            prefixSearchTree(strings)
+        }
 
     suspend fun getPrefixSearchTreeForMatcher(matcher: Matcher, backwards: Boolean): PrefixSearchNode {
-        val key = Pair(matcher, backwards)
-        _matcherSearchTrees[key]?.let { return it }
+        return matcherSearchTrees.get(Pair(matcher, backwards))
+    }
+}
+
+
+internal class DefaultDeferredMap<K, V>(private val getValue: suspend (K) -> V) {
+    private var _data = mutableMapOf<K, Deferred<V>>()
+
+    // This class is safe for insertion into the lazy map.
+    private val lock = Mutex(false)
+
+    suspend fun get(key: K): V = coroutineScope {
+        getNonCancelledAsync(key)?.let { return@coroutineScope it.await() }
         lock.withLock {
-            val currentTree = _matcherSearchTrees[key]
-            return if (currentTree != null) {
-                currentTree
-            } else {
-                val words = matcher.matchingWords(context)
-                val strings = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
-                val tree = prefixSearchTree(strings)
-                _matcherSearchTrees[key] = tree
-                tree
+            val deferred = getNonCancelledAsync(key) ?: async {
+                getValue(key)
             }
-        }
+            _data[key] = deferred
+            deferred
+        }.await()
+    }
+
+    private fun getNonCancelledAsync(key: K): Deferred<V>? {
+        val deferred = _data[key]
+        return if (deferred == null || deferred.isCancelled) null else deferred
     }
 }
