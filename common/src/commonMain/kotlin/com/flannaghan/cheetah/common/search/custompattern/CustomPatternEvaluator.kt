@@ -9,7 +9,6 @@ import com.flannaghan.cheetah.common.search.SearchContext
  */
 class CustomPatternEvaluator(private val pattern: CustomPattern) {
     private val states = ArrayDeque<State>()
-    private val newStates = mutableListOf<State>()
 
     private suspend fun match(context: SearchContext, chars: List<Char>): Boolean {
         // Clear initial state if anything is remaining.
@@ -28,8 +27,6 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
                 val char = chars[current.stringPosition]
                 val component = pattern.components[current.patternPosition]
                 matchLetter(context, component, char, current)
-                states.addAll(newStates)
-                newStates.clear()
             }
             // Otherwise we'll try the next state in the stack of states.
         }
@@ -57,7 +54,7 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
                 state.patternPosition++
             }
         }
-        newStates.add(state)
+        states.add(state)
     }
 
     private fun addCopyState(state: State, matched: Boolean, complete: Boolean) {
