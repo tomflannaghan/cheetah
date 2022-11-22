@@ -4,7 +4,6 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose") version "0.4.0-build182"
     id("com.android.library")
-    id("kotlin-android-extensions")
     id("com.squareup.sqldelight")
 }
 
