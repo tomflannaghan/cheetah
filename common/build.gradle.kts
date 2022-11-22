@@ -16,7 +16,15 @@ repositories {
 }
 
 kotlin {
-    android()
+
+    android {
+        configurations {
+            create("testApi")
+            create("testDebugApi")
+            create("testReleaseApi")
+        }
+    }
+
     jvm("desktop") {
         compilations.all {
             kotlinOptions.jvmTarget = "11"
