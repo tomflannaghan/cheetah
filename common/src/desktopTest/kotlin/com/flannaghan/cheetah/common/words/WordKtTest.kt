@@ -12,19 +12,4 @@ internal class WordKtTest {
         assertEquals("ABO", stringToEntry("a b Ø"))
     }
 
-    @Test
-    fun stringsToWords() {
-        val expected = listOf(
-            Word("hello", "HELLO"),
-            Word("après-ski", "APRESSKI"),
-            Word("Ardèche", "ARDECHE"),
-            Word("a b Ø", "ABO"),
-        )
-        assertEquals(expected, stringsToWords(expected.map { it.string }))
-    }
-
-    @Test
-    fun stringsToWordsBlanks() {
-        assertEquals(listOf<Word>(), stringsToWords(listOf("", "")))
-    }
 }
