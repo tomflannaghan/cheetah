@@ -2,7 +2,9 @@ package com.flannaghan.cheetah.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import com.flannaghan.cheetah.common.datasource.DefinitionDataSource
 import com.flannaghan.cheetah.common.datasource.dataSources
+import com.flannaghan.cheetah.common.datasource.getAllWords
 import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.search.SearchResult
 import com.flannaghan.cheetah.common.search.search
@@ -21,12 +23,15 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
 
     private val dataSources = dataSources(context)
 
-    private val allWordsDeferred = scope.async { populateAllWords() }
+    private val wordsDeferred = scope.async {
+        getAllWords(dataSources.filter { it.defaults.useWordList }, context)
+    }
+
     private val searchContextDeferred = scope.async {
         SearchContext(
-            getAllWords(),
-            dataSources.firstOrNull { it.definitionSearcher != null }
-                ?.definitionSearcher?.let {
+            wordsDeferred.await(),
+            dataSources.filter { it.defaults.useDefinitions }.filterIsInstance<DefinitionDataSource>().firstOrNull()
+                ?.let {
                     { query, words -> it.fullTextSearch(context, words, query) }
                 }
         )
@@ -40,19 +45,6 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
 
     private val searchLauncher = SingleJobLauncher()
     private val definitionLookupLauncher = SingleJobLauncher()
-
-    private suspend fun populateAllWords() = coroutineScope {
-        val allWords = dataSources
-            .filter { it.defaults.useWordList }
-            .map { async { it.wordListFetcher.getWords(context) } }
-            .awaitAll()
-            .flatten()
-            .distinct()
-            .sortedBy { it.entry }
-        allWords
-    }
-
-    private suspend fun getAllWords(): List<Word> = allWordsDeferred.await()
 
     suspend fun doSearch(query: String) = coroutineScope {
         if (query == currentJobQuery) return@coroutineScope
@@ -72,7 +64,7 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
             val definitions = withContext(backgroundContext()) {
                 dataSources
                     .filter { it.defaults.useDefinitions }
-                    .mapNotNull { it.definitionSearcher }
+                    .filterIsInstance<DefinitionDataSource>()
                     .map { async { it.lookupDefinition(context, word) } }
                     .awaitAll()
             }

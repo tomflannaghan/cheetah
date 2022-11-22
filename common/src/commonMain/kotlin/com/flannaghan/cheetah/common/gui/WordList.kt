@@ -44,5 +44,9 @@ fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
             maxLines = 3
         )
         Spacer(Modifier.weight(1f))
+
+        for (source in word.dataSources) {
+            Text(source.name.substring(0, 1), color = source.color)
+        }
     }
 }

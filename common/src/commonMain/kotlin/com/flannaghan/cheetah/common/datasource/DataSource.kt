@@ -2,43 +2,28 @@ package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
 import com.flannaghan.cheetah.common.ApplicationContext
+import com.flannaghan.cheetah.common.words.Word
 import com.google.gson.Gson
 import java.io.File
 import java.util.*
 
 /**
- * A data source can provide words and/or definitions for words. The word list element is required, but
- * the definition searching functionality is optional (e.g. a plain word list won't have definitions).
+ * A data source can provide words and/or definitions for words. The base class just defines getting words.
  * A color is also provided for the UI to display in an icon.
  */
-data class DataSource(
-    val name: String,
-    val wordListFetcher: WordListFetcher,
-    val definitionSearcher: DefinitionSearcher?,
-    val color: Color,
-    val defaults: DataSourceDefaults,
-)
+abstract class DataSource(val name: String, val color: Color, val defaults: DataSourceDefaults) {
+    abstract suspend fun getWords(context: ApplicationContext): List<Word>
+}
+
+/* DefinitionDataSource adds the ability to search definitions */
+abstract class DefinitionDataSource(name: String, color: Color, defaults: DataSourceDefaults) :
+    DataSource(name, color, defaults) {
+    abstract suspend fun lookupDefinition(context: ApplicationContext, word: Word): String
+    abstract suspend fun fullTextSearch(context: ApplicationContext, allWords: List<Word>, pattern: String): List<Word>
+}
 
 
 data class DataSourceDefaults(val useWordList: Boolean, val useDefinitions: Boolean)
-
-/**
- * Find all data sources defined in a directory (looks for .json files and treats them as configs).
- * Skips any that result in errors.
- */
-fun dataSources(context: ApplicationContext): List<DataSource> {
-    val results = mutableListOf<DataSource>()
-    for (file in File(context.dataPath()).listFiles() ?: error("Root dir ${context.dataPath()} must be directory")) {
-        if (file.isFile && file.name.endsWith(".json") && file.canRead()) {
-            try {
-                results.add(dataSourceFromJson(file))
-            } catch (e: DataSourceDecodeError) {
-                println("Decode error for $file: $e") // For now simply print error and move on!
-            }
-        }
-    }
-    return results
-}
 
 
 private data class DataSourceJson(
@@ -71,12 +56,12 @@ fun dataSourceFromJson(jsonFile: File): DataSource {
         "TextFileWordList" -> {
             val file = File(jsonFile.path.replace(".json", ".txt"))
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
-            wordListTextFileDataSource(dataSourceJson.name, file, color, defaults)
+            WordListTextFileDataSource(dataSourceJson.name, file, color, defaults)
         }
         "SqliteWordDatabase" -> {
             val file = File(jsonFile.path.replace(".json", ".sqlite"))
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
-            sqliteWordDatabaseDataSource(dataSourceJson.name, file, color, defaults)
+            SqliteWordDatabaseDataSource(dataSourceJson.name, file, color, defaults)
         }
         else -> throw UnknownTypeDataSourceError(dataSourceJson.type)
     }
