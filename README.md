@@ -44,7 +44,50 @@ Here are some examples:
 ### Multiple Queries
 
 Several of these queries can be specified at the same time, either as new lines within the search box, or seperated
-by `;`. The results are words that match all of the queries. 
+by `;`. The results are words that match all of the queries.
 
+## Data Sources
+
+The `/data` folder contains the data sources that the app will make use of. Each data source is defined by a JSON file
+and a data file. Both must have the same name, but different extensions. All `.json` files within the `/data` folder
+will be processed as config files.
+
+Here's an example showing all of the fields:
+
+```
+{
+  "name": "UKACD 17",
+  "color": "#0000FF",
+  "type": "TextFileWordList",
+  "metadata": {},
+  "useWordListByDefault": true,
+  "useDefinitionsByDefault": true
+}
+```
+
+Here are the definitions of the fields:
+
+- `name` - currently unused
+- `color` - currently unused
+- `type` - either `TextFileWordList` or `SqliteWordDatabase`
+- `metadata` - currently unused
+- `useWordListByDefault` - this is optional, defaulting to `true`. Selects whether we should use this data source
+  as a source of words that we consider valid.
+- `useDefinitionsByDefault` - this is optional, defaulting to `true`. Selects whether we should use this data source
+  as a source of definitions (for both full text search and display).
+
+### Text File Word Lists
+
+This mode requies a data file with extension `.txt`. Each line must contain a word as it should be rendered, followed by
+a tab, followed by the canonical representation of the word (that pattern matching should be applied to).
+See `/data/ukacd.json` for examples.
+
+This type of data can only act as a word list. It cannot act as a source of definitions.
+
+### Sqllite Word Databases
+
+This mode requies an sqlite data file with extension `.sqlite`. The database structure is complex.
+
+This type of data can act as a word list and as a source of definitions.
 
 
