@@ -90,4 +90,9 @@ This mode requies an sqlite data file with extension `.sqlite`. The database str
 
 This type of data can act as a word list and as a source of definitions.
 
+# Installing on Android
 
+1. Pair the device for debugging from inside Idea.
+2. Run the application via Idea on the device. This will install the app.
+3. Open the device file explorer, and navigate to `data/data/com.flannaghan.cheetah.android`.
+4. Copy the data files from the `/data` folder in this repo to that location in the device.
