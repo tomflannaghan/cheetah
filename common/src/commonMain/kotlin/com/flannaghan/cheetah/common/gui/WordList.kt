@@ -46,7 +46,7 @@ fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
         Spacer(Modifier.weight(1f))
 
         for (source in word.dataSources) {
-            Text(source.name.substring(0, 1), color = source.color)
+            DataSourceIcon(source, greyscale = selected)
         }
     }
 }

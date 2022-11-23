@@ -1,6 +1,6 @@
 {
   "name": "Wiktionary",
-  "color": "#FF0000",
+  "color": "#000000",
   "type": "SqliteWordDatabase",
   "metadata": {},
   "useWordListByDefault": false
