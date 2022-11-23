@@ -2,10 +2,97 @@ package com.flannaghan.cheetah.common.datasource
 
 import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.words.Word
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
+
+
+/**
+ * A class that wraps up the management of multiple data sources. It caches loading of them etc.
+ */
+class DataSourcesManager(val dataSources: List<DataSource>) {
+    private val dataSourceToBitMap = dataSources.withIndex().associate { Pair(it.value, 1 shl it.index) }
+
+    private var dataSourcesProcessed = mutableSetOf<DataSource>()
+    private var dataSourceAwaitableCache = mutableMapOf<DataSource, Deferred<Pair<DataSource, List<Word>>>>()
+    private var allWordsSorted = listOf<Word>()
+    private val dataLock = Mutex(false)
+
+    /**
+     * Returns all words from the listed data sources.
+     */
+    suspend fun getAllWords(
+        desiredDataSources: List<DataSource>,
+        context: ApplicationContext
+    ): List<Word> = coroutineScope {
+        if (desiredDataSources.size == 0) return@coroutineScope listOf()
+        // For any unprocessed dataSources, if we don't already have awaitables, create them.
+        val awaitables = mutableListOf<Deferred<Pair<DataSource, List<Word>>>>()
+        dataLock.withLock {
+            for (ds in desiredDataSources) {
+                if (ds !in dataSourcesProcessed && ds !in dataSourceAwaitableCache) {
+                    val awaitable = async { Pair(ds, ds.getWords(context).sortedBy { it.string }) }
+                    dataSourceAwaitableCache[ds] = awaitable
+                    awaitables.add(awaitable)
+                }
+            }
+        }
+        // Now await them outside of the lock.
+        val allWordLists = awaitables.awaitAll()
+
+        // Now integrate into the list if required. This is a merge.
+        dataLock.withLock {
+            for ((ds, newWords) in allWordLists) {
+                if (ds !in dataSourcesProcessed) {
+                    val currentBitMask = dataSourceToBitMap[ds] ?: continue
+                    val newAllWords = mutableListOf<Word>()
+                    var i = 0
+                    var j = 0
+                    while (i < allWordsSorted.size && j < newWords.size) {
+                        val currentWord = allWordsSorted[i]
+                        val newWord = newWords[j]
+                        if (currentWord.string < newWord.string) {
+                            newAllWords.add(currentWord)
+                            //println("${currentWord.string} not in ${ds.name}")
+                            i++
+                        } else if (currentWord.string > newWord.string) {
+                            newAllWords.add(newWord.copy(bitmask = currentBitMask))
+                            //println("${newWord.string} is new from ${ds.name}")
+                            j++
+                        } else {
+                            // The two are equal.
+                            newAllWords.add(currentWord.copy(bitmask = currentWord.bitmask or currentBitMask))
+                            //println("${currentWord.string} is existing and also from ${ds.name}")
+                            i++
+                            j++
+                        }
+                    }
+                    if (i < allWordsSorted.size) newAllWords.addAll(allWordsSorted.subList(i, allWordsSorted.size))
+                    if (j < newWords.size) newAllWords.addAll(newWords.subList(j, newWords.size).map {
+                        Word(it.string, it.entry, currentBitMask)
+                    })
+                    dataSourcesProcessed.add(ds)
+                    dataSourceAwaitableCache.remove(ds)
+                    allWordsSorted = newAllWords
+                }
+            }
+        }
+
+        // At this point, all words from the data sources will appear in allWordsSorted. Now just filter them down.
+        val desiredBitMask = desiredDataSources.map { dataSourceToBitMap[it] }
+            .filterNotNull()
+            .reduce(Int::or)
+        return@coroutineScope allWordsSorted.filter { (it.bitmask and desiredBitMask) != 0 }
+    }
+
+    fun getDataSources(bitmask: Int): List<DataSource> {
+        return dataSourceToBitMap.filter { it.value and bitmask != 0 }.map { it.key }
+    }
+}
 
 
 /**
@@ -24,24 +111,4 @@ fun dataSources(context: ApplicationContext): List<DataSource> {
         }
     }
     return results
-}
-
-
-suspend fun getAllWords(
-    dataSources: List<DataSource>,
-    context: ApplicationContext
-): List<Word> = coroutineScope {
-    // We want to group the words together, combining data sources.
-    val allData = dataSources
-        .map { async { it.getWords(context) } }
-        .awaitAll()
-        .flatten()
-    val wordToDataSources = mutableMapOf<Pair<String, String>, List<DataSource>>()
-    for (word in allData) {
-        wordToDataSources[Pair(word.string, word.entry)] = wordToDataSources.getOrDefault(
-            Pair(word.string, word.entry), listOf()
-        ) + word.dataSources
-    }
-
-    wordToDataSources.map { Word(it.key.first, it.key.second, it.value) }
 }

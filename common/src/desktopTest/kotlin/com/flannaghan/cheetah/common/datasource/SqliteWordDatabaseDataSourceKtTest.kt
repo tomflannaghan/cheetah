@@ -18,7 +18,7 @@ internal class SqliteWordDatabaseDataSourceKtTest {
         val source = SqliteWordDatabaseDataSource("wiktionary", file, Color.Blue, defaults)
         assertEquals("wiktionary", source.name)
         assertEquals(Color.Blue, source.color)
-        val testWord = Word("goat", "GOAT", listOf(source))
+        val testWord = Word("goat", "GOAT")
         runBlocking {
             val words = source.getWords(context)
             assertTrue(testWord in words)

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 internal class CustomPatternEvaluatorTest {
-    val context = SearchContext(listOf("BAT", "HAT", "HOG", "HA", "TAT").map { Word("?", it, listOf()) })
+    val context = SearchContext(listOf("BAT", "HAT", "HOG", "HA", "TAT").map { Word("?", it) })
 
     @Test
     fun letters() = runBlocking {

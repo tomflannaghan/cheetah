@@ -55,6 +55,9 @@ fun SearchableWordList(
         WordList(
             result.words,
             selectedWordIndex,
+            getDataSources = {
+                searchModel.dataSourcesManager.getDataSources(it.bitmask)
+            },
             onClick = {
                 wordListFocusRequester.requestFocus()
                 onWordSelected(it)

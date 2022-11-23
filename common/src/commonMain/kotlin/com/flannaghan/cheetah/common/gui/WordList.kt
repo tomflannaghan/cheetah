@@ -12,12 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import com.flannaghan.cheetah.common.datasource.DataSource
 import com.flannaghan.cheetah.common.words.Word
 
 @Composable
 fun WordList(
     words: List<Word>,
     selectedWordIndex: Int? = null,
+    getDataSources: (Word) -> List<DataSource>,
     onClick: (Int) -> Unit = { },
     modifier: Modifier = Modifier
 ) {
@@ -29,6 +31,7 @@ fun WordList(
     ) { index, word ->
         WordListItem(
             word,
+            getDataSources = getDataSources,
             onClick = {
                 onClick(index)
             },
@@ -39,7 +42,12 @@ fun WordList(
 
 
 @Composable
-fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
+fun WordListItem(
+    word: Word,
+    onClick: () -> Unit,
+    getDataSources: (Word) -> List<DataSource>,
+    selected: Boolean
+) {
     val backgroundColour = if (selected) MaterialTheme.colors.secondary else MaterialTheme.colors.background
     Row(modifier = Modifier.clickable(onClick = onClick).background(color = backgroundColour)) {
         Text(
@@ -48,7 +56,7 @@ fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
         )
         Spacer(Modifier.weight(1f))
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-            for (source in word.dataSources) {
+            for (source in getDataSources(word)) {
                 DataSourceIcon(source, greyscale = selected)
             }
         }

@@ -3,14 +3,16 @@ package com.flannaghan.cheetah.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import com.flannaghan.cheetah.common.datasource.DataSource
+import com.flannaghan.cheetah.common.datasource.DataSourcesManager
 import com.flannaghan.cheetah.common.datasource.DefinitionDataSource
 import com.flannaghan.cheetah.common.datasource.dataSources
-import com.flannaghan.cheetah.common.datasource.getAllWords
 import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.search.SearchResult
 import com.flannaghan.cheetah.common.search.search
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 abstract class SearchModel(private val context: ApplicationContext, scope: CoroutineScope) {
     @Composable
@@ -31,36 +33,50 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
     abstract fun updateDefinition(definition: String)
     abstract fun updateWordListDataSources(dataSources: Set<DataSource>)
 
-    val dataSources = dataSources(context)
+    val dataSourcesManager = DataSourcesManager(dataSources(context))
+    private val ftsDataSource = dataSourcesManager.dataSources.filter {
+        it.defaults.useDefinitions
+    }.filterIsInstance<DefinitionDataSource>().firstOrNull()
 
-    // State initialised by the asyncInit function.
-    private var allWords: List<Word> = emptyList()
-    private var searchContext: SearchContext? = null
-    private var currentWordListDataSources: Set<DataSource> = emptySet()
-
+    /**
+     * Some initialisation that takes a while. Good to get on with this and not wait until the first search.
+     */
     private val asyncInitialisation = scope.async {
-        updateWordListDataSources(dataSources.filter { it.defaults.useWordList }.toSet())
+        val dataSources = dataSourcesManager.dataSources.filter { it.defaults.useWordList }
+        updateWordListDataSources(dataSources.toSet())
         withContext(backgroundContext()) {
-            allWords = getAllWords(dataSources, context)
+            // Warm the cache up with the initially selected data sources.
+            dataSourcesManager.getAllWords(dataSources, context)
         }
     }
 
+    /**
+     * Returns the SearchContext for the data sources. This caches the previous value returned, so unless the
+     * data sources change, it'll return the same SearchContext (which is good because it is expensive to init).
+     */
+    private val searchContextLock = Mutex(false)
+    private var searchContext: SearchContext? = null
+    private var currentWordListDataSources: Set<DataSource> = emptySet()
+
     private suspend fun getSearchContext(wordListDataSources: Set<DataSource>): SearchContext {
-        asyncInitialisation.await()
-        val currentSearchContext = searchContext
-        if (wordListDataSources != currentWordListDataSources || currentSearchContext == null) {
-            val thisSearchContext = SearchContext(
-                allWords.filter { word -> word.dataSources.any { it in wordListDataSources } },
-                dataSources.filter { it.defaults.useDefinitions }.filterIsInstance<DefinitionDataSource>().firstOrNull()
-                    ?.let {
+        searchContextLock.withLock {
+            val currentSearchContext = searchContext
+            if (wordListDataSources != currentWordListDataSources || currentSearchContext == null) {
+                val allWords = withContext(backgroundContext()) {
+                    dataSourcesManager.getAllWords(wordListDataSources.toList(), context)
+                }
+                val thisSearchContext = SearchContext(
+                    allWords,
+                    ftsDataSource?.let {
                         { query, words -> it.fullTextSearch(context, words, query) }
                     }
-            )
-            currentWordListDataSources = wordListDataSources
-            searchContext = thisSearchContext
-            return thisSearchContext
-        } else {
-            return currentSearchContext
+                )
+                currentWordListDataSources = wordListDataSources
+                searchContext = thisSearchContext
+                return thisSearchContext
+            } else {
+                return currentSearchContext
+            }
         }
     }
 
@@ -85,7 +101,7 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
     suspend fun lookupDefinition(word: Word) = coroutineScope {
         definitionLookupLauncher.launch(this) {
             val definitions = withContext(backgroundContext()) {
-                dataSources
+                dataSourcesManager.dataSources
                     .filter { it.defaults.useDefinitions }
                     .filterIsInstance<DefinitionDataSource>()
                     .map { async { it.lookupDefinition(context, word) } }

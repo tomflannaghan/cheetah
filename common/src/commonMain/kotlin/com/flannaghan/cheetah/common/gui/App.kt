@@ -22,7 +22,7 @@ fun App(searchModel: SearchModel) {
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                title = { Text("Cheetah") },
+                title = { Text("Cheetah \uD83D\uDC06") },
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -57,7 +57,7 @@ fun Menu(searchModel: SearchModel) {
         Column(modifier = Modifier.padding(10.dp)) {
             Text("Word Lists", style = MaterialTheme.typography.h6)
             val enabledDataSources = searchModel.wordListDataSources().value
-            for (dataSource in searchModel.dataSources) {
+            for (dataSource in searchModel.dataSourcesManager.dataSources) {
                 val enabled = dataSource in enabledDataSources
                 val newDataSources = if (enabled) enabledDataSources.minus(dataSource)
                 else enabledDataSources.plus(dataSource)
