@@ -5,6 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.flannaghan.cheetah.common.datasource.DataSource
 import com.flannaghan.cheetah.common.search.SearchResult
 import kotlinx.coroutines.CoroutineScope
 
@@ -24,6 +25,9 @@ class AndroidSearchModel(
     @Composable
     override fun definitionState(): State<String> = viewModel.definition.observeAsState("")
 
+    @Composable
+    override fun wordListDataSources(): State<Set<DataSource>> = viewModel.wordListDataSources.observeAsState(setOf())
+
     override fun updateQuery(query: String) {
         viewModel.query.value = query
     }
@@ -35,10 +39,15 @@ class AndroidSearchModel(
     override fun updateDefinition(definition: String) {
         viewModel.definition.value = definition
     }
+
+    override fun updateWordListDataSources(dataSources: Set<DataSource>) {
+        viewModel.wordListDataSources.value = dataSources
+    }
 }
 
 class SearchViewModel : ViewModel() {
     val query = MutableLiveData("")
     val result = MutableLiveData(SearchResult(true, "", listOf()))
     val definition = MutableLiveData("")
+    val wordListDataSources = MutableLiveData(setOf<DataSource>())
 }

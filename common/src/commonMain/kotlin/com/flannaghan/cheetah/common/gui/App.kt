@@ -50,6 +50,7 @@ fun App(searchModel: SearchModel) {
 
 @Composable
 fun Menu(searchModel: SearchModel) {
+    val currentQuery = searchModel.queryState().value
     val coroutineScope = rememberCoroutineScope()
     Column {
         TopAppBar(title = { Text("Settings") }, backgroundColor = MaterialTheme.colors.secondary)
@@ -58,13 +59,13 @@ fun Menu(searchModel: SearchModel) {
             val enabledDataSources = searchModel.wordListDataSources().value
             for (dataSource in searchModel.dataSources) {
                 val enabled = dataSource in enabledDataSources
+                val newDataSources = if (enabled) enabledDataSources.minus(dataSource)
+                else enabledDataSources.plus(dataSource)
                 DataSourceMenuRow(dataSource, enabled,
                     onClick = {
                         coroutineScope.launch {
-                            searchModel.updateWordListDataSources(
-                                if (enabled) enabledDataSources.minus(dataSource)
-                                else enabledDataSources.plus(dataSource)
-                            )
+                            searchModel.updateWordListDataSources(newDataSources)
+                            searchModel.doSearch(currentQuery, newDataSources)
                         }
                     })
             }
@@ -94,6 +95,7 @@ fun SearchPage(searchModel: SearchModel) {
     var selectedWordIndex by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val searchResult = searchModel.resultState().value
+    val wordListDataSources = searchModel.wordListDataSources().value
 
     LaunchedEffect(searchResult.words, selectedWordIndex) {
         val index = selectedWordIndex
@@ -118,7 +120,7 @@ fun SearchPage(searchModel: SearchModel) {
                         onQueryChanged = {
                             selectedWordIndex = null
                             searchModel.updateQuery(it)
-                            scope.launch { searchModel.doSearch(it) }
+                            scope.launch { searchModel.doSearch(it, wordListDataSources) }
                             selectedWordIndex = 0
                         }
                     )

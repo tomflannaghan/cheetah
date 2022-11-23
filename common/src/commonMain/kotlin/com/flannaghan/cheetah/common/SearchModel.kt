@@ -33,19 +33,35 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
 
     val dataSources = dataSources(context)
 
-    private val wordsDeferred = scope.async {
+    // State initialised by the asyncInit function.
+    private var allWords: List<Word> = emptyList()
+    private var searchContext: SearchContext? = null
+    private var currentWordListDataSources: Set<DataSource> = emptySet()
+
+    private val asyncInitialisation = scope.async {
         updateWordListDataSources(dataSources.filter { it.defaults.useWordList }.toSet())
-        getAllWords(dataSources, context)
+        withContext(backgroundContext()) {
+            allWords = getAllWords(dataSources, context)
+        }
     }
 
-    private val searchContextDeferred = scope.async {
-        SearchContext(
-            wordsDeferred.await(),
-            dataSources.filter { it.defaults.useDefinitions }.filterIsInstance<DefinitionDataSource>().firstOrNull()
-                ?.let {
-                    { query, words -> it.fullTextSearch(context, words, query) }
-                }
-        )
+    private suspend fun getSearchContext(wordListDataSources: Set<DataSource>): SearchContext {
+        asyncInitialisation.await()
+        val currentSearchContext = searchContext
+        if (wordListDataSources != currentWordListDataSources || currentSearchContext == null) {
+            val thisSearchContext = SearchContext(
+                allWords.filter { word -> word.dataSources.any { it in wordListDataSources } },
+                dataSources.filter { it.defaults.useDefinitions }.filterIsInstance<DefinitionDataSource>().firstOrNull()
+                    ?.let {
+                        { query, words -> it.fullTextSearch(context, words, query) }
+                    }
+            )
+            currentWordListDataSources = wordListDataSources
+            searchContext = thisSearchContext
+            return thisSearchContext
+        } else {
+            return currentSearchContext
+        }
     }
 
     private var currentJobQuery: String? = null
@@ -53,13 +69,13 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
     private val searchLauncher = SingleJobLauncher()
     private val definitionLookupLauncher = SingleJobLauncher()
 
-    suspend fun doSearch(query: String) = coroutineScope {
+    suspend fun doSearch(query: String, dataSources: Set<DataSource>) = coroutineScope {
         if (query == currentJobQuery) return@coroutineScope
         searchLauncher.launch(this) {
             val newResult = withContext(backgroundContext()) {
-                val searchContext = searchContextDeferred.await()
-                searchContext.withEvaluation {
-                    search(query, searchContext)
+                asyncInitialisation.await()
+                getSearchContext(dataSources).let {
+                    it.withEvaluation { search(query, it) }
                 }
             }
             updateResult(newResult)
