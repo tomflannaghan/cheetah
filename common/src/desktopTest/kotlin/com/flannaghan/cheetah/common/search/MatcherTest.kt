@@ -12,7 +12,7 @@ internal class MatcherTest {
         runBlocking {
             assertEquals(
                 listOf(true, false, true),
-                matcher.match(SearchContext(listOf("AQC", "AOO", "ABC").map { Word("?", it) }))
+                matcher.match(SearchContext(listOf("AQC", "AOO", "ABC").map { Word("?", it, listOf()) }))
             )
         }
     }
@@ -24,7 +24,7 @@ internal class MatcherTest {
         runBlocking {
             assertEquals(
                 entries.map { it.length == 2 },
-                matcher.match(SearchContext(entries.map { Word("?", it) }))
+                matcher.match(SearchContext(entries.map { Word("?", it, listOf()) }))
             )
         }
     }
@@ -35,7 +35,7 @@ internal class MatcherTest {
         runBlocking {
             assertEquals(
                 listOf(false, true, false, false),
-                matcher.match(SearchContext(listOf("1", "4", "7", "XXX").map { Word("?", it) }))
+                matcher.match(SearchContext(listOf("1", "4", "7", "XXX").map { Word("?", it, listOf()) }))
             )
         }
     }

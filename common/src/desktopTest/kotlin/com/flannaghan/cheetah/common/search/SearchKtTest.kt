@@ -9,9 +9,9 @@ internal class SearchKtTest {
 
     private val sampleContext = SearchContext(
         listOf(
-            Word("hello", "HELLO"),
-            Word("a b-c", "ABC"),
-            Word("agc", "AGC"),
+            Word("hello", "HELLO", listOf()),
+            Word("a b-c", "ABC", listOf()),
+            Word("agc", "AGC", listOf()),
         )
     )
 
