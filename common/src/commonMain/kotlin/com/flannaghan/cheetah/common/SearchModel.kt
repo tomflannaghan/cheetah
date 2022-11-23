@@ -2,6 +2,7 @@ package com.flannaghan.cheetah.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import com.flannaghan.cheetah.common.datasource.DataSource
 import com.flannaghan.cheetah.common.datasource.DefinitionDataSource
 import com.flannaghan.cheetah.common.datasource.dataSources
 import com.flannaghan.cheetah.common.datasource.getAllWords
@@ -21,10 +22,20 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
     @Composable
     abstract fun definitionState(): State<String>
 
-    private val dataSources = dataSources(context)
+    @Composable
+    abstract fun wordListDataSources(): State<Set<DataSource>>
+
+
+    abstract fun updateQuery(query: String)
+    abstract fun updateResult(result: SearchResult)
+    abstract fun updateDefinition(definition: String)
+    abstract fun updateWordListDataSources(dataSources: Set<DataSource>)
+
+    val dataSources = dataSources(context)
 
     private val wordsDeferred = scope.async {
-        getAllWords(dataSources.filter { it.defaults.useWordList }, context)
+        updateWordListDataSources(dataSources.filter { it.defaults.useWordList }.toSet())
+        getAllWords(dataSources, context)
     }
 
     private val searchContextDeferred = scope.async {
@@ -36,10 +47,6 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
                 }
         )
     }
-
-    abstract fun updateQuery(query: String)
-    abstract fun updateResult(result: SearchResult)
-    abstract fun updateDefinition(definition: String)
 
     private var currentJobQuery: String? = null
 

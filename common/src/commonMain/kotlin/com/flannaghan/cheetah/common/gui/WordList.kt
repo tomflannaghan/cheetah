@@ -4,9 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.flannaghan.cheetah.common.words.Word
@@ -44,9 +47,10 @@ fun WordListItem(word: Word, onClick: () -> Unit, selected: Boolean) {
             maxLines = 3
         )
         Spacer(Modifier.weight(1f))
-
-        for (source in word.dataSources) {
-            DataSourceIcon(source, greyscale = selected)
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+            for (source in word.dataSources) {
+                DataSourceIcon(source, greyscale = selected)
+            }
         }
     }
 }

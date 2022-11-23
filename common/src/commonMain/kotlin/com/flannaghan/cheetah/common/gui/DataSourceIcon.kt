@@ -26,7 +26,8 @@ fun DataSourceIcon(
     greyscale: Boolean = false,
     size: TextUnit = 20.sp
 ) {
-    val color = (if (greyscale) toGreyscale(dataSource.color) else dataSource.color).copy(alpha = 0.3f)
+    val color = (if (greyscale) toGreyscale(dataSource.color) else dataSource.color)
+        .copy(alpha = LocalContentAlpha.current)
     with(LocalDensity.current) {
         val sizeDp = size.toDp()
         val textSizeDp = sizeDp.times(0.7f)

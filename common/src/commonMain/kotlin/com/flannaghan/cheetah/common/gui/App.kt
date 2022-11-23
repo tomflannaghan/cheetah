@@ -1,16 +1,96 @@
 package com.flannaghan.cheetah.common.gui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.flannaghan.cheetah.common.SearchModel
+import com.flannaghan.cheetah.common.datasource.DataSource
 import kotlinx.coroutines.launch
 
 @Composable
 fun App(searchModel: SearchModel) {
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+    Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            TopAppBar(
+                title = { Text("Cheetah") },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                scaffoldState.drawerState.open()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Settings"
+                        )
+                    }
+                }
+            )
+        },
+        drawerContent = {
+            Menu(searchModel)
+        }
+    ) {
+        SearchPage(searchModel)
+    }
+}
+
+
+@Composable
+fun Menu(searchModel: SearchModel) {
+    val coroutineScope = rememberCoroutineScope()
+    Column {
+        TopAppBar(title = { Text("Settings") }, backgroundColor = MaterialTheme.colors.secondary)
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text("Word Lists", style = MaterialTheme.typography.h6)
+            val enabledDataSources = searchModel.wordListDataSources().value
+            for (dataSource in searchModel.dataSources) {
+                val enabled = dataSource in enabledDataSources
+                DataSourceMenuRow(dataSource, enabled,
+                    onClick = {
+                        coroutineScope.launch {
+                            searchModel.updateWordListDataSources(
+                                if (enabled) enabledDataSources.minus(dataSource)
+                                else enabledDataSources.plus(dataSource)
+                            )
+                        }
+                    })
+            }
+        }
+    }
+}
+
+@Composable
+fun DataSourceMenuRow(dataSource: DataSource, enabled: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 5.dp)
+            .clickable { onClick() }
+    ) {
+        val alphaLevel = if (enabled) ContentAlpha.high else ContentAlpha.disabled
+        CompositionLocalProvider(LocalContentAlpha provides alphaLevel) {
+            DataSourceIcon(dataSource, greyscale = !enabled, size = 20.sp)
+            Spacer(Modifier.width(10.dp))
+            Text(dataSource.name, fontSize = 16.sp)
+        }
+    }
+}
+
+
+@Composable
+fun SearchPage(searchModel: SearchModel) {
     var selectedWordIndex by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val searchResult = searchModel.resultState().value
