@@ -25,6 +25,7 @@ fun SearchableWordList(
     // Manages focus between the text field and the word list.
     val wordListFocusRequester = remember { FocusRequester() }
     val textBoxFocusRequester = remember { FocusRequester() }
+    val wordListDataSources = searchModel.wordListDataSources().value
 
     Column {
         val result = searchModel.resultState().value
@@ -56,7 +57,7 @@ fun SearchableWordList(
             result.words,
             selectedWordIndex,
             getDataSources = {
-                searchModel.dataSourcesManager.getDataSources(it.bitmask)
+                searchModel.dataSourcesManager.getDataSources(it.bitmask).intersect(wordListDataSources).toList()
             },
             onClick = {
                 wordListFocusRequester.requestFocus()
