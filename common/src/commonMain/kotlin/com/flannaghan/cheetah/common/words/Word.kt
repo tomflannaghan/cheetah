@@ -9,6 +9,23 @@ import java.util.*
  */
 data class Word(val string: String, val entry: String, val bitmask: Int = 0)
 
+/**
+ * Compares words first by entry then by string. This is not a total ordering as it does not compare bitmask.
+ */
+class WordComparatorByEntryAndString : Comparator<Word> {
+    override fun compare(o1: Word?, o2: Word?): Int {
+        if (o1 == null || o2 == null) error("Can't compare Word with null")
+        return when {
+            o1.entry < o2.entry -> -1
+            o1.entry > o2.entry -> 1
+            o1.string < o2.string -> -1
+            o1.string > o2.string -> 1
+            else -> 0
+        }
+    }
+
+}
+
 
 private val LETTER_REGEX = Regex("[^\\p{L}]")
 

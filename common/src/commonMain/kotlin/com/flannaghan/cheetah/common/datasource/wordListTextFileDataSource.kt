@@ -11,7 +11,7 @@ class WordListTextFileDataSource(name: String, private val file: File, color: Co
         return file
             .readLines(Charsets.UTF_8)
             .map { it.split('\t', limit = 2) }
-            .filter { it.size == 2 }
+            .filter { it.size == 2 && it[1].isNotEmpty() }
             .map { Word(it[0], it[1]) }
     }
 }

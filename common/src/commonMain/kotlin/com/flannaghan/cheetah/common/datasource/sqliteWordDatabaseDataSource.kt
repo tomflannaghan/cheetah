@@ -13,7 +13,9 @@ class SqliteWordDatabaseDataSource(
 
     override suspend fun getWords(context: ApplicationContext): List<Word> {
         val db = context.getWordDatabaseCached(path)
-        return db.wordQueries.selectAll().executeAsList().map { Word(it.word, it.canonical_form) }
+        return db.wordQueries.selectAll().executeAsList()
+            .map { Word(it.word, it.canonical_form) }
+            .filter { it.entry.isNotEmpty() }
     }
 
     override suspend fun lookupDefinition(context: ApplicationContext, word: Word): String {

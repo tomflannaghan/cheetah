@@ -2,6 +2,7 @@ package com.flannaghan.cheetah.common.datasource
 
 import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.words.Word
+import com.flannaghan.cheetah.common.words.WordComparatorByEntryAndString
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,11 +32,12 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
     ): List<Word> = coroutineScope {
         if (desiredDataSources.size == 0) return@coroutineScope listOf()
         // For any unprocessed dataSources, if we don't already have awaitables, create them.
+        val comparator = WordComparatorByEntryAndString()
         val awaitables = mutableListOf<Deferred<Pair<DataSource, List<Word>>>>()
         dataLock.withLock {
             for (ds in desiredDataSources) {
                 if (ds !in dataSourcesProcessed && ds !in dataSourceAwaitableCache) {
-                    val awaitable = async { Pair(ds, ds.getWords(context).sortedBy { it.string }) }
+                    val awaitable = async { Pair(ds, ds.getWords(context).sortedWith(comparator)) }
                     dataSourceAwaitableCache[ds] = awaitable
                     awaitables.add(awaitable)
                 }
@@ -55,11 +57,12 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
                     while (i < allWordsSorted.size && j < newWords.size) {
                         val currentWord = allWordsSorted[i]
                         val newWord = newWords[j]
-                        if (currentWord.string < newWord.string) {
+                        val comparison = comparator.compare(currentWord, newWord)
+                        if (comparison == -1) {
                             newAllWords.add(currentWord)
                             //println("${currentWord.string} not in ${ds.name}")
                             i++
-                        } else if (currentWord.string > newWord.string) {
+                        } else if (comparison == 1) {
                             newAllWords.add(newWord.copy(bitmask = currentBitMask))
                             //println("${newWord.string} is new from ${ds.name}")
                             j++
