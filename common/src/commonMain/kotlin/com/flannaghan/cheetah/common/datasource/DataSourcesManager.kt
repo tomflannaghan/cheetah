@@ -19,7 +19,6 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
     private val dataSourceToBitMap = dataSources.withIndex().associate { Pair(it.value, 1 shl it.index) }
 
     private var dataSourcesProcessed = mutableSetOf<DataSource>()
-    private var dataSourceAwaitableCache = mutableMapOf<DataSource, Deferred<Pair<DataSource, List<Word>>>>()
     private var allWordsSorted = listOf<Word>()
     private val dataLock = Mutex(false)
 
@@ -36,18 +35,16 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
         val awaitables = mutableListOf<Deferred<Pair<DataSource, List<Word>>>>()
         dataLock.withLock {
             for (ds in desiredDataSources) {
-                if (ds !in dataSourcesProcessed && ds !in dataSourceAwaitableCache) {
+                if (ds !in dataSourcesProcessed) {
                     val awaitable = async { Pair(ds, ds.getWords(context).sortedWith(comparator)) }
-                    dataSourceAwaitableCache[ds] = awaitable
                     awaitables.add(awaitable)
                 }
             }
-        }
-        // Now await them outside of the lock.
-        val allWordLists = awaitables.awaitAll()
 
-        // Now integrate into the list if required. This is a merge.
-        dataLock.withLock {
+            // Now await them outside of the lock.
+            val allWordLists = awaitables.awaitAll()
+
+            // Now integrate into the list if required. This is a merge.
             for ((ds, newWords) in allWordLists) {
                 if (ds !in dataSourcesProcessed) {
                     val currentBitMask = dataSourceToBitMap[ds] ?: continue
@@ -78,9 +75,8 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
                     if (j < newWords.size) newAllWords.addAll(newWords.subList(j, newWords.size).map {
                         Word(it.string, it.entry, currentBitMask)
                     })
-                    dataSourcesProcessed.add(ds)
-                    dataSourceAwaitableCache.remove(ds)
                     allWordsSorted = newAllWords
+                    dataSourcesProcessed.add(ds)
                 }
             }
         }
