@@ -3,5 +3,6 @@
   "color": "#000000",
   "type": "SqliteWordDatabase",
   "metadata": {},
-  "useWordListByDefault": false
+  "useWordListByDefault": false,
+  "useDefinitionsByDefault": false
 }

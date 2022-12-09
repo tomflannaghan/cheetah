@@ -33,9 +33,14 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                         }
                         DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
                     }
+
                     is OrderedListItem -> {
                         Spacer(Modifier.width(30.dp * (it.level - 1)))
                         Text("${it.number}.", style = DefinitionTheme.number)
+                        DefinitionSpan(it.contents, style = DefinitionTheme.body)
+                    }
+
+                    is Paragraph -> {
                         DefinitionSpan(it.contents, style = DefinitionTheme.body)
                     }
                 }
@@ -63,11 +68,13 @@ fun List<SpanElement>.buildAnnotatedString(): AnnotatedString = buildAnnotatedSt
                     append(element.text)
                 }
             }
+
             is Label -> {
                 withStyle(DefinitionTheme.label.toSpanStyle()) {
                     append(element.contents.buildAnnotatedString())
                 }
             }
+
             is Superscript -> {
                 withStyle(DefinitionTheme.superscript.toSpanStyle()) {
                     append(element.text)

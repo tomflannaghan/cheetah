@@ -33,14 +33,12 @@ class SqliteWordDatabaseDataSource(
         val resultLines = mutableListOf<String>()
         for (word_ in words) {
             for (definition in db.definitionQueries.definitionsForWord(word_).executeAsList()) {
-                resultLines.add("=$word_=")
                 resultLines.add(definition.text)
             }
         }
 
         for ((parentWord, relationships) in wordToRelationships) {
             for (parentDef in db.definitionQueries.definitionsForWord(parentWord).executeAsList()) {
-                resultLines.add("=$parentWord (${relationships.joinToString(", ")})=")
                 resultLines.add(parentDef.text)
             }
         }

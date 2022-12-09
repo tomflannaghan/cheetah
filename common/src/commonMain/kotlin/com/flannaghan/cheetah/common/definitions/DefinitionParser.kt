@@ -37,7 +37,7 @@ class DefinitionParser {
             val groups = headingMatch.groupValues
             return Heading(parseSpan(groups[2]), groups[1].length)
         }
-        return null
+        return Paragraph(parseSpan(string))
     }
 
     private data class Bracket(val start: String, val end: String, val makeElement: (String) -> SpanElement)

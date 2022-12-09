@@ -13,6 +13,7 @@ sealed class DefinitionPart
 abstract class LineElement : DefinitionPart()
 data class Heading(val contents: List<SpanElement>, val level: Int) : LineElement()
 data class OrderedListItem(val number: Int, val contents: List<SpanElement>, val level: Int) : LineElement()
+data class Paragraph(val contents: List<SpanElement>) : LineElement()
 
 /**
  * Span elements that form text.
