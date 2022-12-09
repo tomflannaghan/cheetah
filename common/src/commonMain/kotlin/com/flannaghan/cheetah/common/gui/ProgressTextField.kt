@@ -2,10 +2,9 @@ package com.flannaghan.cheetah.common.gui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +51,9 @@ fun ProgressTextField(
         ) {
             if (showProgressIndicator.value) {
                 CircularProgressIndicator()
+            }
+            IconButton(onClick = { onValueChange("") }) {
+                Icon(Icons.Default.Delete, "Delete")
             }
             Spacer(modifier = Modifier.width(10.dp))
         }
