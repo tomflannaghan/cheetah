@@ -11,38 +11,42 @@ import kotlin.text.Regex.Companion.escape
  * - superscript <sup>..</sup>
  */
 
-val HEADING_REGEX = Regex("(=+)(.+?)(=+)")
+val HEADING_REGEX = Regex("(=+)(.+?)(=+)(.*)")
 val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
 val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")  // Removes the target of links.
 
 class DefinitionParser {
     private val orderedListStack = ArrayDeque<Int>()
 
-    fun parse(string: String) = Definition(string.lines().mapNotNull { parseLine(it) })
+    fun parse(string: String) = Definition(string.lines().flatMap { parseLine(it) })
 
-    private fun parseLine(string: String): LineElement? {
-        val orderedListMatch = ORDERED_LIST_REGEX.matchEntire(string)
+    private fun parseLine(string: String): List<LineElement> {
+        // Ignore empty lines.
+        if (string.trim() == "") return listOf()
+
+        val orderedListMatch = ORDERED_LIST_REGEX.matchEntire(string.trim())
         if (orderedListMatch != null) {
             val groups = orderedListMatch.groupValues
             val level = groups[1].length
             while (level < orderedListStack.size) orderedListStack.removeLast()
             while (level > orderedListStack.size) orderedListStack.addLast(0)
             orderedListStack[orderedListStack.size - 1]++
-            return OrderedListItem(orderedListStack.last(), parseSpan(groups[2]), level)
+            return listOf(OrderedListItem(orderedListStack.last(), parseSpan(groups[2]), level))
         } else {
             orderedListStack.clear()
         }
-        val headingMatch = HEADING_REGEX.matchEntire(string)
+        val headingMatch = HEADING_REGEX.matchEntire(string.trim())
         if (headingMatch != null) {
             val groups = headingMatch.groupValues
-            return Heading(parseSpan(groups[2]), groups[1].length)
+            return listOf(Heading(parseSpan(groups[2]), groups[1].length, parseSpan(groups[4])))
         }
-        return Paragraph(parseSpan(string))
+        return listOf(Paragraph(parseSpan(string.trim())))
     }
 
     private data class Bracket(val start: String, val end: String, val makeElement: (String) -> SpanElement)
 
     private val brackets = listOf(
+        Bracket("<~", "~>") { PartOfSpeech(parseSpan(it)) },
         Bracket("{{", "}}") { Label(parseSpan(it)) },
         Bracket("[[", "]]") {
             var linkContents = LINK_REGEX.matchEntire(it)?.groupValues?.last() ?: it
@@ -53,6 +57,7 @@ class DefinitionParser {
             Link(linkContents)
         },
         Bracket("<sup>", "</sup>") { Superscript(it) },
+        Bracket("<etym>", "</etym>") { Etymology(parseSpan(it)) },
     )
     private val tokenRegex = Regex(brackets.joinToString("|") { "${escape(it.start)}|${escape(it.end)}" })
     private val bracketStarts = brackets.map { it.start }.toSet()

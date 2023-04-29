@@ -89,4 +89,20 @@ internal class DefinitionParserTest {
             parser.parse("#Hello [[I'm a link {{not a label}}]] and some text {{and a label [[with link]]}} !")
         )
     }
+
+    @Test
+    fun spanHeading() {
+        val parser = DefinitionParser()
+        assertEquals(
+            Definition(
+                listOf(
+                    Heading(
+                        contents = listOf(Text(text = "Hello")), level = 1,
+                        detail = listOf(Text(" "), PartOfSpeech(contents = listOf(Text("Bye"))))
+                    )
+                )
+            ),
+            parser.parse("=Hello= <~Bye~>")
+        )
+    }
 }

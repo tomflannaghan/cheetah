@@ -8,9 +8,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.flannaghan.cheetah.common.definitions.*
@@ -32,6 +34,13 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                             else -> error("Too many levels in $it")
                         }
                         DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
+                        if (it.detail.isNotEmpty()) {
+                            DefinitionSpan(
+                                it.detail,
+                                style = style.copy(fontWeight = FontWeight.Normal, color = Color.Unspecified),
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
                     }
 
                     is OrderedListItem -> {
@@ -78,6 +87,18 @@ fun List<SpanElement>.buildAnnotatedString(): AnnotatedString = buildAnnotatedSt
             is Superscript -> {
                 withStyle(DefinitionTheme.superscript.toSpanStyle()) {
                     append(element.text)
+                }
+            }
+
+            is Etymology -> {
+                withStyle(DefinitionTheme.etymology.toSpanStyle()) {
+                    append(element.contents.buildAnnotatedString())
+                }
+            }
+
+            is PartOfSpeech -> {
+                withStyle(DefinitionTheme.h2.toSpanStyle()) {
+                    append(element.contents.buildAnnotatedString())
                 }
             }
         }

@@ -11,7 +11,11 @@ sealed class DefinitionPart
  * Block elements that occupy whole lines.
  */
 abstract class LineElement : DefinitionPart()
-data class Heading(val contents: List<SpanElement>, val level: Int) : LineElement()
+data class Heading(
+    val contents: List<SpanElement>, val level: Int,
+    val detail: List<SpanElement> = listOf()
+) : LineElement()
+
 data class OrderedListItem(val number: Int, val contents: List<SpanElement>, val level: Int) : LineElement()
 data class Paragraph(val contents: List<SpanElement>) : LineElement()
 
@@ -23,3 +27,5 @@ data class Text(val text: String) : SpanElement()
 data class Link(val text: String) : SpanElement()
 data class Label(val contents: List<SpanElement>) : SpanElement()
 data class Superscript(val text: String) : SpanElement()
+data class Etymology(val contents: List<SpanElement>) : SpanElement()
+data class PartOfSpeech(val contents: List<SpanElement>) : SpanElement()
