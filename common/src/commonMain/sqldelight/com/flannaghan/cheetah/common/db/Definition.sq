@@ -15,13 +15,15 @@ ORDER BY wordDefinition.rank;
 fullTextSearch:
 SELECT word.word, word.canonical_form
 FROM definition
-JOIN word ON word.word = definition.word
+JOIN wordDefinition ON wordDefinition.id_definition = definition.rowid
+JOIN word ON word.id = wordDefinition.id_word
 WHERE definition MATCH ?;
 
 fullTextSearchDerivedWords:
 SELECT derived.word, derived.canonical_form
 FROM definition
-JOIN word ON word.word = definition.word
+JOIN wordDefinition ON wordDefinition.id_definition = definition.rowid
+JOIN word ON word.id = wordDefinition.id_word
 JOIN derivedWord ON derivedWord.id_word_parent = word.id
 JOIN word AS derived ON derivedWord.id_word = derived.id
 WHERE definition MATCH ?;
