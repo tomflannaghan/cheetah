@@ -23,9 +23,30 @@ data class Paragraph(val contents: List<SpanElement>) : LineElement()
  * Span elements that form text.
  */
 abstract class SpanElement : DefinitionPart()
-data class Text(val text: String) : SpanElement()
-data class Link(val text: String) : SpanElement()
-data class Label(val contents: List<SpanElement>) : SpanElement()
-data class Superscript(val text: String) : SpanElement()
-data class Etymology(val contents: List<SpanElement>) : SpanElement()
-data class PartOfSpeech(val contents: List<SpanElement>) : SpanElement()
+abstract class LeafSpanElement : SpanElement() {
+    abstract val text: String
+}
+
+abstract class ContentsSpanElement : SpanElement() {
+    abstract val contents: List<SpanElement>
+    abstract fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement
+}
+
+data class Text(override val text: String) : LeafSpanElement()
+data class Link(override val text: String) : LeafSpanElement()
+data class Superscript(override val text: String) : LeafSpanElement()
+data class Label(override val contents: List<SpanElement>) : ContentsSpanElement() {
+    override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = Label(newContents)
+}
+
+data class Etymology(override val contents: List<SpanElement>) : ContentsSpanElement() {
+    override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = Etymology(newContents)
+}
+
+data class PartOfSpeech(override val contents: List<SpanElement>) : ContentsSpanElement() {
+    override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = PartOfSpeech(newContents)
+}
+
+data class Highlight(override val contents: List<SpanElement>) : ContentsSpanElement() {
+    override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = Highlight(newContents)
+}

@@ -18,6 +18,7 @@ class DefinitionTheme {
         val body = TextStyle(fontSize = 14.sp)
         val number = TextStyle(fontSize = 14.sp)
         val etymology = TextStyle(color = Color.Gray, fontSize = 12.sp)
+        val highlight = TextStyle(background = Color.Yellow)
 
         val link: TextStyle
             @Composable

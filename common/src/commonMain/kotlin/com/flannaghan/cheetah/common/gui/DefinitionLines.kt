@@ -101,6 +101,12 @@ fun List<SpanElement>.buildAnnotatedString(): AnnotatedString = buildAnnotatedSt
                     append(element.contents.buildAnnotatedString())
                 }
             }
+
+            is Highlight -> {
+                withStyle(DefinitionTheme.highlight.toSpanStyle()) {
+                    append(element.contents.buildAnnotatedString())
+                }
+            }
         }
     }
 }

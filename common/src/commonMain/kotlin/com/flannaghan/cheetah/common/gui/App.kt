@@ -96,6 +96,9 @@ fun SearchPage(searchModel: SearchModel) {
     val scope = rememberCoroutineScope()
     val searchResult = searchModel.resultState().value
     val wordListDataSources = searchModel.wordListDataSources().value
+    val highlightStrings = searchResult.query.lines().mapNotNull {
+        Regex("s:(\\w+)\\*?").matchEntire(it)?.groupValues?.get(1)
+    }
 
     LaunchedEffect(searchResult.words, selectedWordIndex) {
         val index = selectedWordIndex
@@ -126,7 +129,7 @@ fun SearchPage(searchModel: SearchModel) {
                     )
                 },
                 {
-                    DefinitionView(searchModel.definitionState().value)
+                    DefinitionView(searchModel.definitionState().value, highlightStrings)
                 }
             )
         }
