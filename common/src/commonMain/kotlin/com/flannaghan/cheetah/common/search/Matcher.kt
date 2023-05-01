@@ -25,13 +25,22 @@ sealed class Matcher {
  */
 data class RegexMatcher(val pattern: String) : Matcher() {
     override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
-        val extPattern = if (pattern.matches(Regex("^[A-Z]+$"))) "${pattern}.*" else pattern
-        val matcher = Pattern.compile(extPattern).matcher("")
+        val matcher = Pattern.compile(pattern).matcher("")
         return words.map {
             matcher.reset(it.entry)
             matcher.matches()
         }
     }
+
+    override val children = emptyList<Matcher>()
+}
+
+/**
+ * Prefix matching.
+ */
+data class PrefixMatcher(val prefix: String) : Matcher() {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> =
+        words.map { it.entry.startsWith(prefix) }
 
     override val children = emptyList<Matcher>()
 }
@@ -137,12 +146,9 @@ private fun parallelize(matcher: Matcher): Matcher {
     return when {
         parallelized -> matcher
         fullTextSearch -> when (matcher) {
-            is RegexMatcher -> matcher
-            is ParallelChunkMatcher -> matcher
-            is FullTextSearchMatcher -> matcher
-            is CustomPatternMatcher -> matcher
             is AndMatcher -> AndMatcher(matcher.children.map { parallelize(it) })
             is OrMatcher -> OrMatcher(matcher.children.map { parallelize(it) })
+            else -> matcher
         }
         else -> ParallelChunkMatcher(matcher)
     }
@@ -156,12 +162,10 @@ private fun parallelize(matcher: Matcher): Matcher {
  * Also removes any duplicates.
  */
 private fun optimizeOrdering(matcher: Matcher): Matcher = when (matcher) {
-    is RegexMatcher -> matcher
-    is FullTextSearchMatcher -> matcher
-    is CustomPatternMatcher -> matcher
     is ParallelChunkMatcher -> ParallelChunkMatcher(optimizeOrdering(matcher.matcher))
     is AndMatcher -> AndMatcher(reorderChildrenDescending(matcher.children, ::andWeight))
     is OrMatcher -> OrMatcher(reorderChildrenDescending(matcher.children, ::orWeight))
+    else -> matcher
 }
 
 private fun reorderChildrenDescending(matchers: List<Matcher>, weightFunc: (Matcher) -> Double) = matchers
@@ -170,6 +174,7 @@ private fun reorderChildrenDescending(matchers: List<Matcher>, weightFunc: (Matc
     .sortedByDescending { weightFunc(it) }
 
 private fun andWeight(matcher: Matcher): Double = when (matcher) {
+    is PrefixMatcher -> matcher.prefix.length * 5.0
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is FullTextSearchMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
@@ -177,7 +182,8 @@ private fun andWeight(matcher: Matcher): Double = when (matcher) {
 }
 
 private fun orWeight(matcher: Matcher): Double = when (matcher) {
-    is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -1.0
+    is PrefixMatcher -> matcher.prefix.length * -1.0
+    is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -5.0
     is FullTextSearchMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { orWeight(it) }
