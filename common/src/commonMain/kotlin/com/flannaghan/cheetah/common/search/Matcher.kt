@@ -45,6 +45,17 @@ data class PrefixMatcher(val prefix: String) : Matcher() {
     override val children = emptyList<Matcher>()
 }
 
+/**
+ * Length matching.
+ */
+data class LengthMatcher(val min: Int?, val max: Int?) : Matcher() {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> =
+        words.map {
+            (min == null || it.entry.length >= min) && (max == null || it.entry.length <= max)
+        }
+
+    override val children = emptyList<Matcher>()
+}
 
 /**
  * Processes matches in chunks asynchronously.
@@ -150,6 +161,7 @@ private fun parallelize(matcher: Matcher): Matcher {
             is OrMatcher -> OrMatcher(matcher.children.map { parallelize(it) })
             else -> matcher
         }
+
         else -> ParallelChunkMatcher(matcher)
     }
 }
@@ -176,6 +188,7 @@ private fun reorderChildrenDescending(matchers: List<Matcher>, weightFunc: (Matc
 private fun andWeight(matcher: Matcher): Double = when (matcher) {
     is PrefixMatcher -> matcher.prefix.length * 5.0
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
+    is LengthMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { andWeight(it) }
@@ -184,6 +197,7 @@ private fun andWeight(matcher: Matcher): Double = when (matcher) {
 private fun orWeight(matcher: Matcher): Double = when (matcher) {
     is PrefixMatcher -> matcher.prefix.length * -1.0
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -5.0
+    is LengthMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { orWeight(it) }

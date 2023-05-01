@@ -54,4 +54,12 @@ internal class SearchQueryKtTest {
     fun parseSemicolonSplit() {
         assertEquals(FullTextSearchQuery("\"A\" AND \"B\""), stringToSearchQuery("s:a;s:b"))
     }
+
+    @Test
+    fun parseLength() {
+        assertEquals(LengthSearchQuery(5, 5), stringToSearchQuery("5"))
+        assertEquals(LengthSearchQuery(5, null), stringToSearchQuery("5-"))
+        assertEquals(LengthSearchQuery(null, 5), stringToSearchQuery("-5"))
+        assertEquals(LengthSearchQuery(14, 15), stringToSearchQuery("14-15"))
+    }
 }

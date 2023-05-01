@@ -21,6 +21,11 @@ data class RegexSearchQuery(val pattern: String) : SearchQuery()
 data class PrefixSearchQuery(val prefix: String) : SearchQuery()
 
 /**
+ * A length search.
+ */
+data class LengthSearchQuery(val min: Int?, val max: Int?) : SearchQuery()
+
+/**
  * A pattern match.
  */
 data class CustomPatternSearchQuery(val pattern: String) : SearchQuery()
@@ -42,8 +47,23 @@ fun stringToSearchQuery(string: String): SearchQuery {
         for (term in line.toUpperCase(Locale.ROOT).split(';')) {
             when {
                 term.startsWith("S:") -> fullTextTerms.add(term.substring(2))
+
                 "/`<>".any { it in term } -> queries.add(CustomPatternSearchQuery(term))
+
                 term.matches(Regex("^[A-Z]+$")) -> queries.add(PrefixSearchQuery(term))
+
+                term.isNotEmpty() && term.matches(Regex("^\\d*-?\\d*$")) -> {
+                    if ("-" in term) {
+                        val (min, max) = term.split("-", limit = 2).map {
+                            if (it == "") null else it.toInt()
+                        }
+                        queries.add(LengthSearchQuery(min, max))
+                    } else {
+                        val len = term.toInt()
+                        queries.add(LengthSearchQuery(len, len))
+                    }
+                }
+
                 else -> queries.add(RegexSearchQuery(term))
             }
         }
@@ -62,6 +82,7 @@ fun searchQueryToMatcher(query: SearchQuery): Matcher {
         is FullTextSearchQuery -> FullTextSearchMatcher(query.matchPattern)
         is RegexSearchQuery -> RegexMatcher(query.pattern)
         is PrefixSearchQuery -> PrefixMatcher(query.prefix)
+        is LengthSearchQuery -> LengthMatcher(query.min, query.max)
         is AndSearchQuery -> AndMatcher(query.children.map { searchQueryToMatcher(it) })
         is CustomPatternSearchQuery -> CustomPatternMatcher(parseCustomPattern(query.pattern))
     }
