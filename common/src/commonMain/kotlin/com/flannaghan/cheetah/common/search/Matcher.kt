@@ -25,7 +25,8 @@ sealed class Matcher {
  */
 data class RegexMatcher(val pattern: String) : Matcher() {
     override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
-        val matcher = Pattern.compile(pattern).matcher("")
+        val extPattern = if (pattern.matches(Regex("^[A-Z]+$"))) "${pattern}.*" else pattern
+        val matcher = Pattern.compile(extPattern).matcher("")
         return words.map {
             matcher.reset(it.entry)
             matcher.matches()
