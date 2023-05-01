@@ -18,15 +18,15 @@ internal class SearchQueryKtTest {
     fun testMultiline() {
         assertEquals(
             AndSearchQuery(
-                RegexSearchQuery("A"),
-                RegexSearchQuery("B"),
+                PrefixSearchQuery("A"),
+                RegexSearchQuery("B.."),
                 FullTextSearchQuery("\"C\" AND \"D\"")
             ),
             stringToSearchQuery(
                 """
                     A
                     s:C
-                    B
+                    B..
                     s:D
                 """.trimIndent()
             )
