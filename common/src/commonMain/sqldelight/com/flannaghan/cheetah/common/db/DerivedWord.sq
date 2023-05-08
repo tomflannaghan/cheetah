@@ -19,4 +19,5 @@ FROM derivedWord
 JOIN word ON derivedWord.id_word = word.id
 JOIN word AS parentWord ON derivedWord.id_word_parent = parentWord.id
 JOIN relationship ON derivedWord.id_relationship = relationship.id
-WHERE word.canonical_form = ?;
+WHERE word.canonical_form = ?
+ORDER BY relationship.rank DESC;
