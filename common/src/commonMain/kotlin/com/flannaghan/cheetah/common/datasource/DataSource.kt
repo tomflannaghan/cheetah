@@ -20,6 +20,7 @@ abstract class DefinitionDataSource(name: String, color: Color, defaults: DataSo
     DataSource(name, color, defaults) {
     abstract suspend fun lookupDefinition(context: ApplicationContext, word: Word): String
     abstract suspend fun fullTextSearch(context: ApplicationContext, allWords: List<Word>, pattern: String): List<Word>
+    abstract suspend fun findLinkedWords(context: ApplicationContext, allWords: List<Word>, word: String): List<Word>
 }
 
 

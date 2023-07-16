@@ -21,3 +21,9 @@ JOIN word AS parentWord ON derivedWord.id_word_parent = parentWord.id
 JOIN relationship ON derivedWord.id_relationship = relationship.id
 WHERE word.canonical_form = ?
 ORDER BY relationship.rank DESC;
+
+childWordsForEntry:
+SELECT word.* FROM word
+JOIN derivedWord ON derivedWord.id_word = word.id
+JOIN word AS parent ON derivedWord.id_word_parent = parent.id
+WHERE parent.canonical_form = ?;

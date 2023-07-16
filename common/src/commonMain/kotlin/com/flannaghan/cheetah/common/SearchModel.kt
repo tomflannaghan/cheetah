@@ -67,8 +67,16 @@ abstract class SearchModel(private val context: ApplicationContext, scope: Corou
                 }
                 val thisSearchContext = SearchContext(
                     allWords,
-                    ftsDataSource?.let {
+                    fullTextSearch =  ftsDataSource?.let {
                         { query, words -> it.fullTextSearch(context, words, query) }
+                    },
+                    relationshipSearch = {
+                        query, words ->
+                        val result = mutableSetOf<Word>()
+                        for (source in dataSourcesManager.dataSources.filterIsInstance<DefinitionDataSource>()) {
+                            result.addAll(source.findLinkedWords(context, words, query))
+                        }
+                        result.toList()
                     }
                 )
                 currentWordListDataSources = wordListDataSources

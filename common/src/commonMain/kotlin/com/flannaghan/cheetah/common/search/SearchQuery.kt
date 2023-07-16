@@ -11,6 +11,11 @@ sealed class SearchQuery
 data class FullTextSearchQuery(val matchPattern: String) : SearchQuery()
 
 /**
+ * A relationship search. [query] is a root word, and the search will return related words.
+ */
+data class RelationshipSearchQuery(val query: String) : SearchQuery()
+
+/**
  * A regex query.
  */
 data class RegexSearchQuery(val pattern: String) : SearchQuery()
@@ -49,6 +54,8 @@ fun stringToSearchQuery(string: String): SearchQuery {
             when {
                 term.startsWith("S:") -> fullTextTerms.add(term.substring(2))
 
+                term.startsWith("R:") -> queries.add(RelationshipSearchQuery(term.substring(2)))
+
                 "/`<>".any { it in term } -> queries.add(CustomPatternSearchQuery(term))
 
                 term.matches(Regex("^[A-Z]+$")) -> queries.add(PrefixSearchQuery(term))
@@ -81,6 +88,7 @@ fun stringToSearchQuery(string: String): SearchQuery {
 fun searchQueryToMatcher(query: SearchQuery): Matcher {
     return when (query) {
         is FullTextSearchQuery -> FullTextSearchMatcher(query.matchPattern)
+        is RelationshipSearchQuery -> RelationshipMatcher(query.query)
         is RegexSearchQuery -> RegexMatcher(query.pattern)
         is PrefixSearchQuery -> PrefixMatcher(query.prefix)
         is LengthSearchQuery -> LengthMatcher(query.min, query.max)

@@ -78,12 +78,27 @@ data class ParallelChunkMatcher(val matcher: Matcher, private val chunkSize: Int
 data class FullTextSearchMatcher(private val matchQuery: String) : Matcher() {
     override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
         if (words.isEmpty()) return emptyList()
-        val ftsResults = context.fullTextSearch?.invoke(matchQuery, words)?.toSet() ?: error("No FTS found")
-        return words.map { it in ftsResults }
+        val results = context.fullTextSearch?.invoke(matchQuery, words)?.toSet() ?: error("No FTS found")
+        return words.map { it in results }
     }
 
     override val children = emptyList<Matcher>()
 }
+
+
+/**
+ * Relationship search using the sqlite WordDatabase schema.
+ */
+data class RelationshipMatcher(private val query: String) : Matcher() {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> {
+        if (words.isEmpty()) return emptyList()
+        val results = context.relationshipSearch?.invoke(query, words)?.toSet() ?: error("No relationship search found")
+        return words.map { it in results }
+    }
+
+    override val children = emptyList<Matcher>()
+}
+
 
 /**
  * Our custom pattern matcher.
@@ -149,14 +164,14 @@ fun optimize(matcher: Matcher): Matcher = optimizeOrdering(parallelize(matcher))
  */
 private fun parallelize(matcher: Matcher): Matcher {
     var parallelized = false
-    var fullTextSearch = false
+    var dbSearch = false
     matcher.visit {
         if (it is ParallelChunkMatcher) parallelized = true
-        if (it is FullTextSearchMatcher) fullTextSearch = true
+        if (it is FullTextSearchMatcher || it is RelationshipMatcher) dbSearch = true
     }
     return when {
         parallelized -> matcher
-        fullTextSearch -> when (matcher) {
+        dbSearch -> when (matcher) {
             is AndMatcher -> AndMatcher(matcher.children.map { parallelize(it) })
             is OrMatcher -> OrMatcher(matcher.children.map { parallelize(it) })
             else -> matcher
@@ -190,6 +205,7 @@ private fun andWeight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is LengthMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
+    is RelationshipMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { andWeight(it) }
 }
@@ -199,6 +215,7 @@ private fun orWeight(matcher: Matcher): Double = when (matcher) {
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -5.0
     is LengthMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
+    is RelationshipMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
     else -> matcher.children.sumOf { orWeight(it) }
 }

@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.flannaghan.cheetah.common.ApplicationContext
 import com.flannaghan.cheetah.common.db.executeAsListSuspend
 import com.flannaghan.cheetah.common.words.Word
+import com.flannaghan.cheetah.common.words.stringToEntry
 import java.io.File
 
 class SqliteWordDatabaseDataSource(
@@ -63,4 +64,17 @@ class SqliteWordDatabaseDataSource(
         return allWords.filter { it.entry in canonicalForms || it.entry in derivedCanonicalForms }
     }
 
+    override suspend fun findLinkedWords(
+        context: ApplicationContext,
+        allWords: List<Word>,
+        word: String
+    ): List<Word> {
+        val db = context.getWordDatabaseCached(path)
+        val canonicalForms = db.derivedWordQueries
+            .childWordsForEntry(stringToEntry(word))
+            .executeAsListSuspend()
+            .map { it.canonical_form }
+            .toSet()
+        return allWords.filter { it.entry in canonicalForms }
+    }
 }

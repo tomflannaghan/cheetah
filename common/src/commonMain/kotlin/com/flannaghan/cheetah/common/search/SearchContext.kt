@@ -14,7 +14,8 @@ import kotlinx.coroutines.sync.withLock
  */
 class SearchContext(
     val words: List<Word>,
-    val fullTextSearch: (suspend (String, List<Word>) -> List<Word>)? = null
+    val fullTextSearch: (suspend (String, List<Word>) -> List<Word>)? = null,
+    val relationshipSearch: (suspend (String, List<Word>) -> List<Word>)? = null,
 ) {
     private val searchTrees = DefaultDeferredMap<Boolean, PrefixSearchNode> { backwards ->
         val words = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
