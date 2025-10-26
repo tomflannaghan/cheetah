@@ -18,6 +18,22 @@ internal class MatcherTest {
     }
 
     @Test
+    fun numWordsMatch() {
+        val matcher = NumWordsMatcher(3)
+        runBlocking {
+            assertEquals(
+                listOf(false, false, true, false),
+                matcher.match(SearchContext(listOf(
+                    Word("hello world", "HELLOWORLD"),
+                    Word("foo", "FOO"),
+                    Word("a b c", "ABC"),
+                    Word("one two three four", "ONETWOTHREEFOUR"),
+                )))
+            )
+        }
+    }
+
+    @Test
     fun parallelMatch() {
         val matcher = ParallelChunkMatcher(RegexMatcher(".."), 10)
         val entries = (1..10).flatMap { listOf("A", "B", "C", "AA", "BB", "CC") }.shuffled()

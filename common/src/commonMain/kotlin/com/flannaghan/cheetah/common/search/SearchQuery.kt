@@ -31,6 +31,11 @@ data class PrefixSearchQuery(val prefix: String) : SearchQuery()
 data class LengthSearchQuery(val min: Int?, val max: Int?) : SearchQuery()
 
 /**
+ * A length search.
+ */
+data class NumWordsSearchQuery(val num: Int) : SearchQuery()
+
+/**
  * A pattern match.
  */
 data class CustomPatternSearchQuery(val pattern: String) : SearchQuery()
@@ -72,6 +77,10 @@ fun stringToSearchQuery(string: String): SearchQuery {
                     }
                 }
 
+                term.isNotEmpty() && term.matches(Regex("^W:\\d+$")) -> {
+                    queries.add(NumWordsSearchQuery(term.substring(2).toInt()))
+                }
+
                 else -> queries.add(RegexSearchQuery(term))
             }
         }
@@ -92,6 +101,7 @@ fun searchQueryToMatcher(query: SearchQuery): Matcher {
         is RegexSearchQuery -> RegexMatcher(query.pattern)
         is PrefixSearchQuery -> PrefixMatcher(query.prefix)
         is LengthSearchQuery -> LengthMatcher(query.min, query.max)
+        is NumWordsSearchQuery -> NumWordsMatcher(query.num)
         is AndSearchQuery -> AndMatcher(query.children.map { searchQueryToMatcher(it) })
         is CustomPatternSearchQuery -> CustomPatternMatcher(parseCustomPattern(query.pattern))
     }

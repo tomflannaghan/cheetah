@@ -62,4 +62,10 @@ internal class SearchQueryKtTest {
         assertEquals(LengthSearchQuery(null, 5), stringToSearchQuery("-5"))
         assertEquals(LengthSearchQuery(14, 15), stringToSearchQuery("14-15"))
     }
+
+    @Test
+    fun parseNumWords() {
+        assertEquals(NumWordsSearchQuery(5), stringToSearchQuery("w:5"))
+        assertEquals(NumWordsSearchQuery(50), stringToSearchQuery("w:50"))
+    }
 }

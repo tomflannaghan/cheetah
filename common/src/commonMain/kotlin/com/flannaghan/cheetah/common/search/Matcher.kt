@@ -58,6 +58,18 @@ data class LengthMatcher(val min: Int?, val max: Int?) : Matcher() {
 }
 
 /**
+ * Num Words matching.
+ */
+data class NumWordsMatcher(val num: Int) : Matcher() {
+    override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> =
+        words.map {
+            it.string.split(Regex("\\s+")).size == num
+        }
+
+    override val children = emptyList<Matcher>()
+}
+
+/**
  * Processes matches in chunks asynchronously.
  */
 data class ParallelChunkMatcher(val matcher: Matcher, private val chunkSize: Int = 10000) : Matcher() {
@@ -204,6 +216,7 @@ private fun andWeight(matcher: Matcher): Double = when (matcher) {
     is PrefixMatcher -> matcher.prefix.length * 5.0
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * 1.0
     is LengthMatcher -> 100.0
+    is NumWordsMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
     is RelationshipMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
@@ -214,6 +227,7 @@ private fun orWeight(matcher: Matcher): Double = when (matcher) {
     is PrefixMatcher -> matcher.prefix.length * -1.0
     is RegexMatcher -> matcher.pattern.count { it in 'a'..'z' || it in 'A'..'Z' } * -5.0
     is LengthMatcher -> 100.0
+    is NumWordsMatcher -> 100.0
     is FullTextSearchMatcher -> 1000.0
     is RelationshipMatcher -> 1000.0
     is CustomPatternMatcher -> -1000.0
