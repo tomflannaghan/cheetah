@@ -44,7 +44,7 @@ Gradle itself runs on the system Java, which is a JRE. Compilation uses a JDK 21
 - `useWordListByDefault` sets which sources start selected in the drawer. `useDefinitionsByDefault` sets which sources are shown in the definition pane.
 - `s:` searches only the **first** SQLite source with `useDefinitionsByDefault`, in file-name order. `r:` searches **every** SQLite source, whatever its flags.
 
-Paths: desktop reads the `cheetah.dataDir` system property, which `desktop/build.gradle.kts` (for `run`) and `common/build.gradle.kts` (for tests) set to this repo's `data/`. Android uses `context.dataDir`, so copy the files to `/data/data/com.flannaghan.cheetah.android/` (see `README.md`).
+Paths: desktop reads the `cheetah.dataDir` system property, which `desktop/build.gradle.kts` (for `run`) and `common/build.gradle.kts` (for tests) set to this repo's `data/`. Android uses `context.dataDir`, so copy the files to `/data/data/com.flannaghan.cheetah.android/` with `scripts/push-android-data.sh` (see `README.md`).
 
 ## Database contract with cheetah-preprocessing
 

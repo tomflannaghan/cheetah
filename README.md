@@ -92,7 +92,17 @@ This type of data can act as a word list and as a source of definitions.
 
 # Installing on Android
 
-1. Pair the device for debugging from inside Idea.
-2. Run the application via Idea on the device. This will install the app.
-3. Open the device file explorer, and navigate to `data/data/com.flannaghan.cheetah.android`.
-4. Copy the data files from the `/data` folder in this repo to that location in the device.
+1. Connect the device with adb (USB, or pair it for wireless debugging), and check `adb devices` lists it.
+2. Install the debug build: `./gradlew :android:installDebug`, or run the app from Idea.
+3. Copy the data files: `scripts/push-android-data.sh`.
+
+The data files live in the app's private directory, `/data/data/com.flannaghan.cheetah.android/`. The script copies
+every `data/*.json` there, along with the `.txt` or `.sqlite` file each one points at. Files in `data/` that no config
+uses are not copied. Pass source names to copy only those, e.g. `scripts/push-android-data.sh wiktionary ukacd`. It
+force-stops the app first, so the new data is loaded when the app is next opened.
+
+The script needs the debug build, because it copies the files in with `run-as`, which only works for debuggable apps.
+If more than one device or emulator is connected, choose one with `ANDROID_SERIAL=<serial from adb devices>`. It finds
+`adb` on the `PATH`, or else from `sdk.dir` in `local.properties`.
+
+Uninstalling the app or clearing its storage deletes the data files. Reinstalling over the top keeps them.
