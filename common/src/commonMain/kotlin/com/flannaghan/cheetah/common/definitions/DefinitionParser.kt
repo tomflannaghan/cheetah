@@ -9,7 +9,7 @@ private val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")  // Removes the target of link
 /**
  * Parses definitions written in a wiki-like syntax, taken from Wikipedia.
  * Supports:
- * - only headers and ordered lists for structure (anything else will be skipped).
+ * - only headers (with any alternative headwords after them) and ordered lists for structure (anything else will be skipped).
  * - links [[xxx|Xxx]] or [[...]].
  * - labels {{xxx}}.
  * - superscript <sup>..</sup>, etymologies <etym>..</etym> and parts of speech <~..~>.
@@ -37,9 +37,25 @@ class DefinitionParser {
         val headingMatch = HEADING_REGEX.matchEntire(string.trim())
         if (headingMatch != null) {
             val groups = headingMatch.groupValues
-            return listOf(Heading(parseSpan(groups[2]), groups[1].length, parseSpan(groups[4])))
+            return listOf(Heading(parseSpan(groups[2]), groups[1].length, parseHeadingDetail(groups[4], groups[1])))
         }
         return listOf(Paragraph(parseSpan(string.trim())))
+    }
+
+    /**
+     * Parses the rest of a heading line, in which alternative headwords are marked like the heading itself, as in
+     * `=arse around= or =arse about=`.
+     */
+    private fun parseHeadingDetail(string: String, marker: String): List<SpanElement> {
+        val result = mutableListOf<SpanElement>()
+        var location = 0
+        for (match in Regex("${escape(marker)}(.+?)${escape(marker)}").findAll(string)) {
+            result.addAll(parseSpan(string.substring(location until match.range.first)))
+            result.add(Headword(parseSpan(match.groupValues[1])))
+            location = match.range.last + 1
+        }
+        result.addAll(parseSpan(string.substring(location)))
+        return result
     }
 
     private data class Bracket(val start: String, val end: String, val makeElement: (String) -> SpanElement)

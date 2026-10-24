@@ -105,4 +105,23 @@ internal class DefinitionParserTest {
             parser.parse("=Hello= <~Bye~>")
         )
     }
+
+    @Test
+    fun alternativeHeadwords() {
+        val parser = DefinitionParser()
+        assertEquals(
+            Definition(
+                listOf(
+                    Heading(
+                        contents = listOf(Text("arse "), Link("around")), level = 1,
+                        detail = listOf(
+                            Text(" or "), Headword(listOf(Link("about"))),
+                            Text(" "), PartOfSpeech(listOf(Text("verb")))
+                        )
+                    )
+                )
+            ),
+            parser.parse("=arse [[around]]= or =[[about]]= <~verb~>")
+        )
+    }
 }

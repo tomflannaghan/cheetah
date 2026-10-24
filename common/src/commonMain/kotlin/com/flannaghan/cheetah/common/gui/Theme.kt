@@ -18,6 +18,7 @@ object DefinitionTheme {
             return TextStyle(color = MaterialTheme.colors.primary)
         }
 
+    val headword = TextStyle(fontWeight = FontWeight.Bold)
     val label = TextStyle(fontStyle = FontStyle.Italic)
     val superscript = TextStyle(fontSize = 12.sp, baselineShift = BaselineShift.Superscript)
     val body = TextStyle(fontSize = 14.sp)

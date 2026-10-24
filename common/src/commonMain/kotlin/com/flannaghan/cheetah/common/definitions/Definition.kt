@@ -47,6 +47,10 @@ data class PartOfSpeech(override val contents: List<SpanElement>) : ContentsSpan
     override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = PartOfSpeech(newContents)
 }
 
+data class Headword(override val contents: List<SpanElement>) : ContentsSpanElement() {
+    override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = Headword(newContents)
+}
+
 data class Highlight(override val contents: List<SpanElement>) : ContentsSpanElement() {
     override fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement = Highlight(newContents)
 }
