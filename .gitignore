@@ -1,5 +1,4 @@
 build
-/gradle
 /.gradle
 /raw_data
 /data/*.sqlite
