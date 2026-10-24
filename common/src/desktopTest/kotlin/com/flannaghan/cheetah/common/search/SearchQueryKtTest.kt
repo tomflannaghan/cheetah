@@ -64,6 +64,19 @@ internal class SearchQueryKtTest {
     }
 
     @Test
+    fun parseTrimsTerms() {
+        assertEquals(PrefixSearchQuery("ABC"), stringToSearchQuery(" abc "))
+        assertEquals(FullTextSearchQuery("\"FOO\""), stringToSearchQuery("a; s:foo ").let { (it as AndSearchQuery).children[1] })
+        assertEquals(LengthSearchQuery(5, 5), stringToSearchQuery("5 "))
+    }
+
+    @Test
+    fun fullTextSearchTerms() {
+        assertEquals(listOf("FOO", "BAR BAZ*"), fullTextSearchTerms("a\ns:foo; S: bar baz* \nb"))
+        assertEquals(listOf<String>(), fullTextSearchTerms("abc"))
+    }
+
+    @Test
     fun parseNumWords() {
         assertEquals(NumWordsSearchQuery(5), stringToSearchQuery("w:5"))
         assertEquals(NumWordsSearchQuery(50), stringToSearchQuery("w:50"))

@@ -30,8 +30,7 @@ fun DefinitionLines(definition: Definition, modifier: Modifier = Modifier) {
                     is Heading -> {
                         val style = when (it.level) {
                             1 -> DefinitionTheme.h1
-                            2 -> DefinitionTheme.h2
-                            else -> error("Too many levels in $it")
+                            else -> DefinitionTheme.h2
                         }
                         DefinitionSpan(it.contents, style = style, modifier = Modifier.padding(top = 8.dp))
                         if (it.detail.isNotEmpty()) {

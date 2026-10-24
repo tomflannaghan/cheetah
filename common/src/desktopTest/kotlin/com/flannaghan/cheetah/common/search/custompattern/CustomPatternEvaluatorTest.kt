@@ -45,6 +45,23 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
+    fun consecutiveAnagrams() = runBlocking {
+        val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'B' to 1), 0), Anagram(mapOf('C' to 1, 'D' to 1), 0))
+        val evaluator = CustomPatternEvaluator(pattern)
+        assertTrue(evaluator.match(context, "BADC"))
+        assertFalse(evaluator.match(context, "BACC"))
+    }
+
+    @Test
+    fun anagramsSeparatedByDot() = runBlocking {
+        val pattern = CustomPattern(
+            Anagram(mapOf('A' to 1, 'B' to 1), 0), Dot, Anagram(mapOf('C' to 1, 'D' to 1), 0)
+        )
+        val evaluator = CustomPatternEvaluator(pattern)
+        assertTrue(evaluator.match(context, "BAXDC"))
+    }
+
+    @Test
     fun dot() = runBlocking {
         val pattern = CustomPattern(Dot, Dot)
         val evaluator = CustomPatternEvaluator(pattern)

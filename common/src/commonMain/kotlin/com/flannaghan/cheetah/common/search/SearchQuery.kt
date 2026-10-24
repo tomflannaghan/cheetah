@@ -31,7 +31,7 @@ data class PrefixSearchQuery(val prefix: String) : SearchQuery()
 data class LengthSearchQuery(val min: Int?, val max: Int?) : SearchQuery()
 
 /**
- * A length search.
+ * A search for phrases of [num] words.
  */
 data class NumWordsSearchQuery(val num: Int) : SearchQuery()
 
@@ -47,48 +47,61 @@ data class AndSearchQuery(val children: List<SearchQuery>) : SearchQuery() {
     constructor(vararg children: SearchQuery) : this(children.asList())
 }
 
+private val PREFIX_REGEX = Regex("[A-Z]+")
+private val LENGTH_REGEX = Regex("\\d*-?\\d*")
+private val NUM_WORDS_REGEX = Regex("W:\\d+")
+
+/**
+ * Splits a query string into its uppercased terms, which are separated by newlines or `;`.
+ */
+private fun terms(string: String): List<String> = string.uppercase(Locale.ROOT)
+    .lines()
+    .flatMap { it.split(';') }
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+
+/**
+ * The search terms of the full text search (`s:`) terms in a query string, uppercased.
+ */
+fun fullTextSearchTerms(string: String): List<String> =
+    terms(string).filter { it.startsWith("S:") }.map { it.substring(2).trim() }
+
 /**
  * Given a string, split into lines and parse each one, producing a search query. Lines are ANDed together.
  */
 fun stringToSearchQuery(string: String): SearchQuery {
-    val fullTextTerms = mutableListOf<String>()
     val queries = mutableListOf<SearchQuery>()
-    for (line in string.lines()) {
-        for (term in line.uppercase(Locale.ROOT).split(';')) {
-            if (term.trim().isEmpty()) continue
-            when {
-                term.startsWith("S:") -> fullTextTerms.add(term.substring(2))
+    for (term in terms(string)) {
+        when {
+            // These are all combined into a single query below.
+            term.startsWith("S:") -> {}
 
-                term.startsWith("R:") -> queries.add(RelationshipSearchQuery(term.substring(2)))
+            term.startsWith("R:") -> queries.add(RelationshipSearchQuery(term.substring(2).trim()))
 
-                "/`<>".any { it in term } -> queries.add(CustomPatternSearchQuery(term))
+            "/`<>".any { it in term } -> queries.add(CustomPatternSearchQuery(term))
 
-                term.matches(Regex("^[A-Z]+$")) -> queries.add(PrefixSearchQuery(term))
+            term.matches(PREFIX_REGEX) -> queries.add(PrefixSearchQuery(term))
 
-                term.isNotEmpty() && term.matches(Regex("^\\d*-?\\d*$")) -> {
-                    if ("-" in term) {
-                        val (min, max) = term.split("-", limit = 2).map {
-                            if (it == "") null else it.toInt()
-                        }
-                        queries.add(LengthSearchQuery(min, max))
-                    } else {
-                        val len = term.toInt()
-                        queries.add(LengthSearchQuery(len, len))
-                    }
+            term.matches(LENGTH_REGEX) -> {
+                if ("-" in term) {
+                    val (min, max) = term.split("-", limit = 2).map { if (it.isEmpty()) null else it.toInt() }
+                    queries.add(LengthSearchQuery(min, max))
+                } else {
+                    val len = term.toInt()
+                    queries.add(LengthSearchQuery(len, len))
                 }
-
-                term.isNotEmpty() && term.matches(Regex("^W:\\d+$")) -> {
-                    queries.add(NumWordsSearchQuery(term.substring(2).toInt()))
-                }
-
-                else -> queries.add(RegexSearchQuery(term))
             }
+
+            term.matches(NUM_WORDS_REGEX) -> queries.add(NumWordsSearchQuery(term.substring(2).toInt()))
+
+            else -> queries.add(RegexSearchQuery(term))
         }
     }
+    val fullTextTerms = fullTextSearchTerms(string)
     if (fullTextTerms.isNotEmpty()) {
         queries.add(FullTextSearchQuery(fullTextTerms.joinToString(" AND ") { "\"$it\"" }))
     }
-    return if (queries.size == 1) queries[0] else AndSearchQuery(queries)
+    return queries.singleOrNull() ?: AndSearchQuery(queries)
 }
 
 /**

@@ -76,6 +76,15 @@ internal class MatcherTest {
     }
 
     @Test
+    fun optimiseNestedFTS() {
+        // The full text search is inside an OR, so it must not end up inside a ParallelChunkMatcher.
+        assertEquals(
+            AndMatcher(OrMatcher(FullTextSearchMatcher("hello"), ParallelChunkMatcher(RegexMatcher("A")))),
+            optimize(AndMatcher(OrMatcher(RegexMatcher("A"), FullTextSearchMatcher("hello"))))
+        )
+    }
+
+    @Test
     fun optimiseFTS() {
         assertEquals(
             AndMatcher(

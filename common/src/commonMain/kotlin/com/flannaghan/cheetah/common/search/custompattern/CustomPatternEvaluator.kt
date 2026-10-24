@@ -126,6 +126,8 @@ class CustomPatternEvaluator(private val pattern: CustomPattern) {
         // this anagram has consumed.
         val charsRemaining = anagramState.remainingLetterCounts.values.sum() + anagramState.numberOfDots
         val done = charsRemaining == anagramState.misprintsConsumed
+        // A later anagram in the pattern must start from fresh counts.
+        if (done) state.anagramState = null
         when {
             !match && done -> addState(state, matched = false, complete = true)
             !match && !done -> addState(state, matched = false, complete = false)

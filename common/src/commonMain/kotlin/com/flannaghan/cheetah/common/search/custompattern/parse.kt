@@ -45,7 +45,7 @@ fun parseCustomPattern(string: String): CustomPattern {
                         subWordQueryBracketDepth--
                         if (subWordQueryBracketDepth == -1) {
                             inSubWordQuery = false
-                            val subWordComponent = components.removeLast()
+                            val subWordComponent = components.removeAt(components.lastIndex)
                             val backwards = if (subWordComponent is SubWord) {
                                 subWordComponent.backwards
                             } else {

@@ -20,7 +20,7 @@ JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :an
 
 ## How a search runs
 
-1. `stringToSearchQuery` (`search/SearchQuery.kt`) uppercases the input, splits it on newlines and `;`, and ANDs the terms together. Each term is classified in this order:
+1. `stringToSearchQuery` (`search/SearchQuery.kt`) uppercases the input, splits it on newlines and `;`, trims each term, and ANDs the terms together. Each term is classified in this order:
    - `S:...` is full-text search. All `S:` terms are merged into one FTS4 `MATCH` of `"a" AND "b"`.
    - `R:word` is a relationship search: the words whose parent is `word` in the `derivedWord` table, e.g. plurals or thesaurus synonyms.
    - Anything containing `` / ` < > `` is a custom pattern (`search/custompattern/`): anagrams, misprints, sub-words.
@@ -37,7 +37,7 @@ JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :an
 
 ## Data sources
 
-`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. A config that fails to decode or points at a missing file is printed and skipped, not raised. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
+`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. A config that fails to decode, has a bad colour or points at a missing file throws `DataSourceDecodeError`, which `dataSources()` prints and skips. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
 
 - Word list `.txt`: one `display string<TAB>CANONICAL` pair per line. Lines with an empty canonical form are dropped.
 - `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 31 sources).
@@ -64,7 +64,7 @@ Canonical forms: `stringToEntry` (`words/Word.kt`) must agree with preprocessing
 
 Definition text is a small wiki-like markup parsed by `DefinitionParser`:
 
-- `=word=` and `==Heading==` are headings. `DefinitionLines` throws on level 3 or deeper.
+- `=word=` and `==Heading==` are headings. `DefinitionLines` styles level 3 or deeper like level 2.
 - `#`, `##`, ... are numbered list items.
 - `[[target|text]]` is a link.
 - `{{...}}` is an italic label.

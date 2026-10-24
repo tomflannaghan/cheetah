@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.flannaghan.cheetah.common.SearchModel
 import com.flannaghan.cheetah.common.datasource.DataSource
+import com.flannaghan.cheetah.common.search.fullTextSearchTerms
 import kotlinx.coroutines.launch
 
 @Composable
@@ -96,9 +97,7 @@ fun SearchPage(searchModel: SearchModel) {
     val scope = rememberCoroutineScope()
     val searchResult = searchModel.resultState().value
     val wordListDataSources = searchModel.wordListDataSources().value
-    val highlightStrings = searchResult.query.lines().mapNotNull {
-        Regex("s:(\\w+)\\*?").matchEntire(it)?.groupValues?.get(1)
-    }
+    val highlightStrings = remember(searchResult.query) { fullTextSearchTerms(searchResult.query) }
 
     LaunchedEffect(searchResult.words, selectedWordIndex) {
         val index = selectedWordIndex

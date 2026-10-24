@@ -13,7 +13,7 @@ import java.util.regex.Pattern
  */
 sealed class Matcher {
     abstract suspend fun match(context: SearchContext, words: List<Word> = context.words): List<Boolean>
-    fun <T> visit(block: (Matcher) -> T): List<T> = listOf(block(this)) + children.map { block(it) }
+    fun <T> visit(block: (Matcher) -> T): List<T> = listOf(block(this)) + children.flatMap { it.visit(block) }
     abstract val children: List<Matcher>
 
     suspend fun matchingWords(context: SearchContext, words: List<Word> = context.words) =
