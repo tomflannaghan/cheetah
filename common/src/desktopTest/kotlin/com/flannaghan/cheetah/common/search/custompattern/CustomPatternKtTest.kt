@@ -58,4 +58,15 @@ internal class CustomPatternKtTest {
             parseCustomPattern(">(G<(S:FOO))E")
         )
     }
+
+    @Test
+    fun parseTwoSubWordMatches() {
+        assertEquals(
+            CustomPattern(
+                SubWordMatch(FullTextSearchMatcher("\"SET\""), backwards = false),
+                SubWordMatch(FullTextSearchMatcher("\"SET\""), backwards = false),
+            ),
+            parseCustomPattern(">(S:SET)>(S:SET)")
+        )
+    }
 }

@@ -66,7 +66,12 @@ fun parseCustomPattern(string: String): CustomPattern {
                     '.' -> components.add(Dot)
                     '>' -> components.add(SubWord(false))
                     '<' -> components.add(SubWord(true))
-                    '(' -> if (previousCharSubWord) inSubWordQuery = true else error("Unexpected (")
+                    '(' -> if (previousCharSubWord) {
+                        inSubWordQuery = true
+                        subWordQueryBracketDepth = 0
+                    } else {
+                        error("Unexpected (")
+                    }
                     in 'A'..'Z' -> components.add(Letter(char))
                     else -> error("Unexpected character $char")
                 }
