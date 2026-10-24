@@ -37,7 +37,7 @@ Gradle itself runs on the system Java, which is a JRE. Compilation uses a JDK 21
 
 ## Data sources
 
-`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. Configs are decoded with kotlinx.serialization and read in file-name order. A config that fails to decode, has a bad colour or points at a missing file throws `InvalidDataSourceException`, which `dataSources()` prints and skips. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
+`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. Configs are decoded with kotlinx.serialization and read in file-name order. A config that fails to decode, has a bad colour or points at a missing file throws `InvalidDataSourceException`, which `dataSources()` prints and skips. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. `data/` is gitignored. Only `ukacd.*` and `wiktionary.json`, added before that, are tracked. Everything else in it is local, and new files there need `git add -f`.
 
 - Word list `.txt`: one `display string<TAB>CANONICAL` pair per line. Lines with an empty canonical form are dropped.
 - `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 32 sources).
