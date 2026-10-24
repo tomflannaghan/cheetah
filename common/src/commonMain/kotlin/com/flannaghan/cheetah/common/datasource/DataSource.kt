@@ -1,7 +1,7 @@
 package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
-import com.flannaghan.cheetah.common.ApplicationContext
+import com.flannaghan.cheetah.common.Platform
 import com.flannaghan.cheetah.common.words.Word
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
@@ -13,15 +13,15 @@ import java.util.*
  * A color is also provided for the UI to display in an icon.
  */
 abstract class DataSource(val name: String, val color: Color, val defaults: DataSourceDefaults) {
-    abstract suspend fun getWords(context: ApplicationContext): List<Word>
+    abstract suspend fun getWords(): List<Word>
 }
 
 /* DefinitionDataSource adds the ability to search definitions */
 abstract class DefinitionDataSource(name: String, color: Color, defaults: DataSourceDefaults) :
     DataSource(name, color, defaults) {
-    abstract suspend fun lookupDefinition(context: ApplicationContext, word: Word): String
-    abstract suspend fun fullTextSearch(context: ApplicationContext, allWords: List<Word>, pattern: String): List<Word>
-    abstract suspend fun findLinkedWords(context: ApplicationContext, allWords: List<Word>, word: String): List<Word>
+    abstract suspend fun lookupDefinition(word: Word): String
+    abstract suspend fun fullTextSearch(allWords: List<Word>, pattern: String): List<Word>
+    abstract suspend fun findLinkedWords(allWords: List<Word>, word: String): List<Word>
 }
 
 
@@ -46,7 +46,7 @@ class UnknownTypeDataSourceError(type: String) : DataSourceDecodeError(type)
 class FileDataSourceError(type: String) : DataSourceDecodeError(type)
 
 
-fun dataSourceFromJson(jsonFile: File): DataSource {
+fun dataSourceFromJson(jsonFile: File, platform: Platform): DataSource {
     val json = jsonFile.readText()
     val dataSourceJson = try {
         Gson().fromJson(json, DataSourceJson::class.java)
@@ -69,7 +69,7 @@ fun dataSourceFromJson(jsonFile: File): DataSource {
         "SqliteWordDatabase" -> {
             val file = File(jsonFile.path.replace(".json", ".sqlite"))
             if (!file.exists() || !file.canRead()) throw FileDataSourceError(file.absolutePath)
-            SqliteWordDatabaseDataSource(name, file, color, defaults)
+            SqliteWordDatabaseDataSource(name, file, color, defaults, platform)
         }
         else -> throw UnknownTypeDataSourceError(type)
     }

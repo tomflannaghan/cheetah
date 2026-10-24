@@ -1,6 +1,6 @@
 package com.flannaghan.cheetah.common.db
 
-import com.flannaghan.cheetah.common.DesktopApplicationContext
+import com.flannaghan.cheetah.common.DesktopPlatform
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -9,9 +9,9 @@ import kotlin.system.measureTimeMillis
 class QueryTest {
 
     fun getDatabase(): WordDatabase {
-        val context = DesktopApplicationContext()
-        val file = File(context.dataPath(), "wiktionary.sqlite")
-        return context.getWordDatabase(file.absolutePath)
+        val platform = DesktopPlatform()
+        val file = File(platform.dataDir, "wiktionary.sqlite")
+        return WordDatabase(platform.createSqlDriver(file.absolutePath))
     }
 
     @Test

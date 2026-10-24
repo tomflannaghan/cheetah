@@ -24,6 +24,7 @@ kotlin {
             dependencies {
                 implementation(project(":common"))
                 implementation(compose.desktop.currentOs)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
             }
         }
         jvmTest {
@@ -37,6 +38,7 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "MainKt"
+        jvmArgs += "-Dcheetah.dataDir=${rootProject.file("data").absolutePath}"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "jvm"

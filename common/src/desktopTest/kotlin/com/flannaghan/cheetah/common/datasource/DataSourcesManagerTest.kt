@@ -1,8 +1,6 @@
 package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
-import com.flannaghan.cheetah.common.ApplicationContext
-import com.flannaghan.cheetah.common.DesktopApplicationContext
 import com.flannaghan.cheetah.common.words.Word
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -24,19 +22,18 @@ internal class DataSourcesManagerTest {
 
     @Test
     fun getAllWords() {
-        val context = DesktopApplicationContext()
         val manager = DataSourcesManager(listOf(dummySource1, dummySource2))
         runBlocking {
-            assertEquals(listOf<Word>(), manager.getAllWords(listOf(), context))
+            assertEquals(listOf<Word>(), manager.getAllWords(listOf()))
             assertEquals(
                 dummySource1.words.map { Word(it.string, it.entry, 0b01) },
-                manager.getAllWords(listOf(dummySource1), context)
+                manager.getAllWords(listOf(dummySource1))
             )
             assertEquals(
                 listOf(
                     Word("Hello", "HELLO", 0b11),
                     Word("xyz", "XYZ", 0b10)
-                ), manager.getAllWords(listOf(dummySource2), context)
+                ), manager.getAllWords(listOf(dummySource2))
             )
             assertEquals(
                 listOf(
@@ -44,7 +41,7 @@ internal class DataSourcesManagerTest {
                     Word("Hello", "HELLO", 0b11),
                     Word("xyz", "XYZ", 0b10)
                 ),
-                manager.getAllWords(listOf(dummySource1, dummySource2), context)
+                manager.getAllWords(listOf(dummySource1, dummySource2))
             )
         }
     }
@@ -52,7 +49,6 @@ internal class DataSourcesManagerTest {
     @Test
     fun getAllWords2() {
         // Same as above, but populates the data sources manager in a different order.
-        val context = DesktopApplicationContext()
         val manager = DataSourcesManager(listOf(dummySource1, dummySource2))
         runBlocking {
             assertEquals(
@@ -61,13 +57,13 @@ internal class DataSourcesManagerTest {
                     Word("Hello", "HELLO", 0b11),
                     Word("xyz", "XYZ", 0b10)
                 ),
-                manager.getAllWords(listOf(dummySource1, dummySource2), context)
+                manager.getAllWords(listOf(dummySource1, dummySource2))
             )
             assertEquals(
                 listOf(
                     Word("Hello", "HELLO", 0b11),
                     Word("xyz", "XYZ", 0b10)
-                ), manager.getAllWords(listOf(dummySource2), context)
+                ), manager.getAllWords(listOf(dummySource2))
             )
         }
     }
@@ -83,5 +79,5 @@ private class DummyDataSource(
     defaults: DataSourceDefaults = DataSourceDefaults(true, true)
 ) :
     DataSource(name, color, defaults) {
-    override suspend fun getWords(context: ApplicationContext) = words
+    override suspend fun getWords() = words
 }

@@ -6,45 +6,35 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import com.flannaghan.cheetah.common.SearchModel
+import com.flannaghan.cheetah.common.datasource.DataSource
+import com.flannaghan.cheetah.common.search.SearchResult
+import com.flannaghan.cheetah.common.words.Word
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchableWordList(
-    searchModel: SearchModel,
+    query: String,
+    result: SearchResult,
     selectedWordIndex: Int?,
     onQueryChanged: (String) -> Unit,
-    onWordSelected: (Int?) -> Unit
+    onWordSelected: (Int) -> Unit,
+    getDataSources: (Word) -> List<DataSource>,
+    modifier: Modifier = Modifier,
 ) {
     // Manages focus between the text field and the word list.
     val wordListFocusRequester = remember { FocusRequester() }
     val textBoxFocusRequester = remember { FocusRequester() }
-    val wordListDataSources = searchModel.wordListDataSources().value
 
-    Column {
-        val result = searchModel.resultState().value
-        val queryText = searchModel.queryState().value
-
+    Column(modifier) {
         ProgressTextField(
-            queryText,
-            onValueChange = {
-                onQueryChanged(it)
-            },
-            keyboardOptions = KeyboardOptions(
-                autoCorrectEnabled = false,
-                capitalization = KeyboardCapitalization.None,
-                keyboardType = KeyboardType.Password,
-            ),
-            isBusy = queryText != result.query,
-            isError = !result.success,
+            query,
+            onValueChange = onQueryChanged,
             modifier = Modifier
                 .focusRequester(textBoxFocusRequester)
                 .onPreviewKeyEvent {
@@ -52,15 +42,20 @@ fun SearchableWordList(
                         wordListFocusRequester.requestFocus()
                         true
                     } else false
-                }
+                },
+            isError = !result.success,
+            isBusy = query != result.query,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                capitalization = KeyboardCapitalization.None,
+                keyboardType = KeyboardType.Password,
+            ),
         )
         Text("${result.words.size} results", style = MaterialTheme.typography.caption)
         WordList(
             result.words,
             selectedWordIndex,
-            getDataSources = {
-                searchModel.dataSourcesManager.getDataSources(it.bitmask).intersect(wordListDataSources).toList()
-            },
+            getDataSources = getDataSources,
             onClick = {
                 wordListFocusRequester.requestFocus()
                 onWordSelected(it)
@@ -76,4 +71,3 @@ fun SearchableWordList(
         )
     }
 }
-

@@ -1,8 +1,7 @@
 package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
-import com.flannaghan.cheetah.common.ApplicationContext
-import com.flannaghan.cheetah.common.DesktopApplicationContext
+import com.flannaghan.cheetah.common.DesktopPlatform
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -25,17 +24,12 @@ internal class DataSourceKtTest {
         File(dir, "noColor.json").writeText("""{"name": "No colour", "type": "TextFileWordList"}""")
         File(dir, "badColor.json").writeText("""{"name": "Bad", "color": "blue", "type": "TextFileWordList"}""")
         for (name in listOf("good", "badJson", "noColor", "badColor")) File(dir, "$name.txt").writeText("a\tA\n")
-        val context = object : ApplicationContext() {
-            override fun dataPath() = dir.path
-            override fun getWordDatabase(filePath: String) = error("Not used")
-        }
-        assertEquals(listOf("Good"), dataSources(context).map { it.name })
+        assertEquals(listOf("Good"), dataSources(DesktopPlatform(dir)).map { it.name })
     }
 
     @Test
     fun dataSources() {
-        val context = DesktopApplicationContext()
-        val sources = dataSources(context)
+        val sources = dataSources(DesktopPlatform())
         assertNotEquals(0, sources.size)
     }
 }

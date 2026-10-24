@@ -12,10 +12,6 @@ group = "com.flannaghan.cheetah"
 version = "1.0"
 
 kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
-    }
-
     android {
         namespace = "com.flannaghan.cheetah.common"
         compileSdk = 37
@@ -28,6 +24,8 @@ kotlin {
         }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
+            // The tests read the real word lists and databases.
+            systemProperty("cheetah.dataDir", rootProject.file("data").absolutePath)
         }
     }
     sourceSets {
@@ -36,6 +34,8 @@ kotlin {
                 api("org.jetbrains.compose.runtime:runtime:1.12.2")
                 api("org.jetbrains.compose.foundation:foundation:1.12.2")
                 api("org.jetbrains.compose.material:material:1.12.2")
+                api("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+                implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
                 implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
                 implementation("app.cash.sqldelight:runtime:2.4.1")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.4.1")
@@ -44,10 +44,7 @@ kotlin {
         }
         androidMain {
             dependencies {
-                api("androidx.appcompat:appcompat:1.8.0")
-                api("androidx.core:core-ktx:1.19.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-                implementation("androidx.compose.runtime:runtime-livedata:1.12.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
                 implementation("app.cash.sqldelight:android-driver:2.4.1")
             }
         }
@@ -59,7 +56,8 @@ kotlin {
         getByName("desktopTest") {
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
             }
         }
     }

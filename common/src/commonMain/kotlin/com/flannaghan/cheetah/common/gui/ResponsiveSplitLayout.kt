@@ -11,10 +11,11 @@ import androidx.compose.ui.unit.dp
 fun ResponsiveSplitLayout(
     maxTopLeftWidth: Dp,
     gapPadding: Dp = 16.dp,
+    modifier: Modifier = Modifier,
     topLeft: @Composable () -> Unit,
     bottomRight: @Composable () -> Unit
 ) {
-    BoxWithConstraints {
+    BoxWithConstraints(modifier) {
         if (maxWidth > maxTopLeftWidth * 2) {
             Row {
                 Column(Modifier.width(maxTopLeftWidth)) {

@@ -1,58 +1,36 @@
 package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
-import com.flannaghan.cheetah.common.ApplicationContext
+import com.flannaghan.cheetah.common.Platform
+import com.flannaghan.cheetah.common.db.WordDatabase
 import com.flannaghan.cheetah.common.db.executeAsListSuspend
 import com.flannaghan.cheetah.common.words.Word
 import com.flannaghan.cheetah.common.words.stringToEntry
 import java.io.File
 
 class SqliteWordDatabaseDataSource(
-    name: String, dbFile: File, color: Color, defaults: DataSourceDefaults
+    name: String, dbFile: File, color: Color, defaults: DataSourceDefaults, platform: Platform
 ) : DefinitionDataSource(name, color, defaults) {
-    private val path = dbFile.absolutePath
+    private val db by lazy { WordDatabase(platform.createSqlDriver(dbFile.absolutePath)) }
 
-    override suspend fun getWords(context: ApplicationContext): List<Word> {
-        val db = context.getWordDatabaseCached(path)
+    override suspend fun getWords(): List<Word> {
         return db.wordQueries.selectAll().executeAsList()
             .map { Word(it.word, it.canonical_form) }
             .filter { it.entry.isNotEmpty() }
     }
 
-    override suspend fun lookupDefinition(context: ApplicationContext, word: Word): String {
-        val db = context.getWordDatabaseCached(path)
+    override suspend fun lookupDefinition(word: Word): String {
         // We use entries rather than words here. Could easily switch if we wanted.
-        val parentWordRows = db.derivedWordQueries.parentWordsForEntry(word.entry).executeAsList()
         val words = db.wordQueries.wordsForEntry(word.entry).executeAsList().map { it.word }
-
-        // Construct a map from {parentWord: [relationshipName]}
-        val wordToRelationships =
-            parentWordRows.groupBy { row -> row.parentWord }.mapValues {
-                it.value.map { row -> row.relationshipName }.distinct()
-            }
-
-        val resultLines = mutableListOf<String>()
-        for (word_ in words) {
-            for (definition in db.definitionQueries.definitionsForWord(word_).executeAsList()) {
-                resultLines.add(definition.text)
-            }
-        }
-
-        for ((parentWord, relationships) in wordToRelationships) {
-            for (parentDef in db.definitionQueries.definitionsForWord(parentWord).executeAsList()) {
-                resultLines.add(parentDef.text)
-            }
-        }
-
-        return resultLines.joinToString("\n")
+        val parentWords = db.derivedWordQueries.parentWordsForEntry(word.entry).executeAsList()
+            .map { it.parentWord }
+            .distinct()
+        return (words + parentWords)
+            .flatMap { db.definitionQueries.definitionsForWord(it).executeAsList() }
+            .joinToString("\n") { it.text }
     }
 
-    override suspend fun fullTextSearch(
-        context: ApplicationContext,
-        allWords: List<Word>,
-        pattern: String
-    ): List<Word> {
-        val db = context.getWordDatabaseCached(path)
+    override suspend fun fullTextSearch(allWords: List<Word>, pattern: String): List<Word> {
         val canonicalForms = db.definitionQueries
             .fullTextSearch(pattern) { _, entry -> entry }
             .executeAsListSuspend()
@@ -64,12 +42,7 @@ class SqliteWordDatabaseDataSource(
         return allWords.filter { it.entry in canonicalForms || it.entry in derivedCanonicalForms }
     }
 
-    override suspend fun findLinkedWords(
-        context: ApplicationContext,
-        allWords: List<Word>,
-        word: String
-    ): List<Word> {
-        val db = context.getWordDatabaseCached(path)
+    override suspend fun findLinkedWords(allWords: List<Word>, word: String): List<Word> {
         val canonicalForms = db.derivedWordQueries
             .childWordsForEntry(stringToEntry(word))
             .executeAsListSuspend()

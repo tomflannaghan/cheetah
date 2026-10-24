@@ -1,6 +1,6 @@
 package com.flannaghan.cheetah.common.datasource
 
-import com.flannaghan.cheetah.common.ApplicationContext
+import com.flannaghan.cheetah.common.Platform
 import com.flannaghan.cheetah.common.words.Word
 import com.flannaghan.cheetah.common.words.WordComparatorByEntryAndString
 import kotlinx.coroutines.Deferred
@@ -9,7 +9,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.File
 
 
 /**
@@ -25,10 +24,7 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
     /**
      * Returns all words from the listed data sources.
      */
-    suspend fun getAllWords(
-        desiredDataSources: List<DataSource>,
-        context: ApplicationContext
-    ): List<Word> = coroutineScope {
+    suspend fun getAllWords(desiredDataSources: List<DataSource>): List<Word> = coroutineScope {
         if (desiredDataSources.size == 0) return@coroutineScope listOf()
         // For any unprocessed dataSources, if we don't already have awaitables, create them.
         val comparator = WordComparatorByEntryAndString()
@@ -36,7 +32,7 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
         dataLock.withLock {
             for (ds in desiredDataSources) {
                 if (ds !in dataSourcesProcessed) {
-                    val awaitable = async { Pair(ds, ds.getWords(context).sortedWith(comparator)) }
+                    val awaitable = async { Pair(ds, ds.getWords().sortedWith(comparator)) }
                     awaitables.add(awaitable)
                 }
             }
@@ -95,15 +91,16 @@ class DataSourcesManager(val dataSources: List<DataSource>) {
 
 
 /**
- * Find all data sources defined in a directory (looks for .json files and treats them as configs).
- * Skips any that result in errors.
+ * Find all data sources defined in the data directory (looks for .json files and treats them as configs), in name
+ * order. Skips any that result in errors.
  */
-fun dataSources(context: ApplicationContext): List<DataSource> {
+fun dataSources(platform: Platform): List<DataSource> {
     val results = mutableListOf<DataSource>()
-    for (file in File(context.dataPath()).listFiles() ?: error("Root dir ${context.dataPath()} must be directory")) {
+    val files = platform.dataDir.listFiles() ?: error("Data dir ${platform.dataDir} must be a directory")
+    for (file in files.sortedBy { it.name }) {
         if (file.isFile && file.name.endsWith(".json") && file.canRead()) {
             try {
-                results.add(dataSourceFromJson(file))
+                results.add(dataSourceFromJson(file, platform))
             } catch (e: DataSourceDecodeError) {
                 println("Decode error for $file: $e") // For now simply print error and move on!
             }

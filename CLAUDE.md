@@ -14,13 +14,13 @@ JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :an
 
 ## Layout
 
-- `common/` holds almost everything. `commonMain` has the UI (`gui/`), search engine (`search/`), data sources (`datasource/`), definition parsing (`definitions/`) and the SQLDelight schema (`sqldelight/`). `desktopMain` and `androidMain` hold only the platform pieces: `ApplicationContext` (data path and DB driver), `SearchModel` (Compose state vs. `LiveData`/`ViewModel`) and `backgroundContext()`.
-- `desktop/` and `android/` are thin entry points that build a `SearchModel` and call `App()`.
+- `common/` holds almost everything. `commonMain` has the UI (`gui/`), search engine (`search/`), data sources (`datasource/`), definition parsing (`definitions/`) and the SQLDelight schema (`sqldelight/`). `SearchViewModel` (`commonMain`) is a multiplatform `androidx.lifecycle.ViewModel` holding the UI state as `StateFlow`s. `desktopMain` and `androidMain` hold only `DesktopPlatform`/`AndroidPlatform`, which implement `Platform` (data directory and SQL driver).
+- `desktop/` and `android/` are thin entry points that create the `SearchViewModel` with `viewModel { }` and call `App()`. On Android the ViewModel survives configuration changes, so the word lists are loaded once.
 - Tests are all in `common/src/desktopTest`. There are none for Android.
 
 ## How a search runs
 
-1. `stringToSearchQuery` (`search/SearchQuery.kt`) uppercases the input, splits it on newlines and `;`, trims each term, and ANDs the terms together. Each term is classified in this order:
+1. `stringToSearchQuery` (`search/SearchQuery.kt`) uppercases the input, splits it on newlines and `;`, trims each term, and ANDs the terms together. A blank query gives no results without searching. Each term is classified in this order:
    - `S:...` is full-text search. All `S:` terms are merged into one FTS4 `MATCH` of `"a" AND "b"`.
    - `R:word` is a relationship search: the words whose parent is `word` in the `derivedWord` table, e.g. plurals or thesaurus synonyms.
    - Anything containing `` / ` < > `` is a custom pattern (`search/custompattern/`): anagrams, misprints, sub-words.
@@ -33,18 +33,18 @@ JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :an
 
 `README.md` documents only regex, `s:` and custom patterns. The prefix, length, `w:` and `r:` forms are documented only in the code.
 
-`SearchContext` caches prefix trees, which are slow to build. It is rebuilt only when the selected word lists change. `SingleJobLauncher` cancels the previous search when a new one starts, and `executeAsListSuspend` lets long DB reads notice cancellation.
+`SearchContext` caches prefix trees, which are slow to build. It is rebuilt only when the selected word lists change. `SearchViewModel` runs searches and definition lookups with `collectLatest`, so a new query cancels the previous search, and `executeAsListSuspend` lets long DB reads notice cancellation.
 
 ## Data sources
 
-`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. A config that fails to decode, has a bad colour or points at a missing file throws `DataSourceDecodeError`, which `dataSources()` prints and skips. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
+`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. A config that fails to decode, has a bad colour or points at a missing file throws `DataSourceDecodeError`, which `dataSources()` prints and skips. Configs are read in file-name order. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
 
 - Word list `.txt`: one `display string<TAB>CANONICAL` pair per line. Lines with an empty canonical form are dropped.
 - `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 31 sources).
 - `useWordListByDefault` sets which sources start selected in the drawer. `useDefinitionsByDefault` sets which sources are shown in the definition pane.
-- `s:` searches only the **first** SQLite source with `useDefinitionsByDefault`, in `File.listFiles()` order, which is unspecified. `r:` searches **every** SQLite source, whatever its flags.
+- `s:` searches only the **first** SQLite source with `useDefinitionsByDefault`, in file-name order. `r:` searches **every** SQLite source, whatever its flags.
 
-Paths: desktop hardcodes `/home/tom/src/cheetah/data/` in `DesktopApplicationContext`. Android uses `context.dataDir`, so copy the files to `/data/data/com.flannaghan.cheetah.android/` (see `README.md`).
+Paths: desktop reads the `cheetah.dataDir` system property, which `desktop/build.gradle.kts` (for `run`) and `common/build.gradle.kts` (for tests) set to this repo's `data/`. Android uses `context.dataDir`, so copy the files to `/data/data/com.flannaghan.cheetah.android/` (see `README.md`).
 
 ## Database contract with cheetah-preprocessing
 
@@ -74,6 +74,6 @@ Changes to this format have to be made in both repos.
 
 ## Test data
 
-The desktop tests open the real dictionary databases. `DesktopApplicationContext` hardcodes `/home/tom/src/cheetah/data/`, and the `data/*.sqlite` files there are gitignored. They are built by `~/src/cheetah-preprocessing` (see its `CLAUDE.md`). `QueryTest` and `SqliteWordDatabaseDataSourceKtTest` need `wiktionary.sqlite`, `WordListTextFileDataSourceKtTest` needs `ukacd.txt`, and `DataSourceKtTest`/`ProfilingTest` need at least one valid config. The other tests use in-memory words.
+The desktop tests open the real dictionary databases. They read `data/` through the `cheetah.dataDir` system property, and the `data/*.sqlite` files there are gitignored. They are built by `~/src/cheetah-preprocessing` (see its `CLAUDE.md`). `QueryTest` and `SqliteWordDatabaseDataSourceKtTest` need `wiktionary.sqlite`, `WordListTextFileDataSourceKtTest` needs `ukacd.txt`, and `DataSourceKtTest`/`ProfilingTest` need at least one valid config. The other tests use in-memory words or temporary directories.
 
 If a DB test fails with an SQLite error such as `no such column`, the database is probably older than the schema in `common/src/commonMain/sqldelight/`. Regenerate it with cheetah-preprocessing rather than changing the code.
