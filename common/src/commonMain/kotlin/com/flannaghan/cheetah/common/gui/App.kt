@@ -24,9 +24,11 @@ fun App(viewModel: SearchViewModel) {
         val wordListDataSources by viewModel.wordListDataSources.collectAsStateWithLifecycle()
         Scaffold(
             scaffoldState = scaffoldState,
+            contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
             topBar = {
                 TopAppBar(
                     title = { Text("Cheetah 🐆") },
+                    windowInsets = AppBarDefaults.topAppBarWindowInsets,
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { scaffoldState.drawerState.open() } }) {
                             Icon(imageVector = Icons.Filled.Menu, contentDescription = "Settings")
@@ -54,7 +56,11 @@ fun Menu(
     onToggleDataSource: (DataSource) -> Unit,
 ) {
     Column {
-        TopAppBar(title = { Text("Settings") }, backgroundColor = MaterialTheme.colors.secondary)
+        TopAppBar(
+            title = { Text("Settings") },
+            windowInsets = AppBarDefaults.topAppBarWindowInsets,
+            backgroundColor = MaterialTheme.colors.secondary,
+        )
         Column(modifier = Modifier.padding(10.dp)) {
             Text("Word Lists", style = MaterialTheme.typography.h6)
             for (dataSource in dataSources) {
