@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -39,7 +39,7 @@ fun SearchableWordList(
                 onQueryChanged(it)
             },
             keyboardOptions = KeyboardOptions(
-                autoCorrect = false,
+                autoCorrectEnabled = false,
                 capitalization = KeyboardCapitalization.None,
                 keyboardType = KeyboardType.Password,
             ),
@@ -66,7 +66,7 @@ fun SearchableWordList(
                 onWordSelected(it)
             },
             modifier = Modifier
-                .focusRequester(wordListFocusRequester).focusModifier()
+                .focusRequester(wordListFocusRequester).focusTarget()
                 .onKeyEvent {
                     if (it.type == KeyEventType.KeyDown && it.key == Key.Tab) {
                         textBoxFocusRequester.requestFocus()

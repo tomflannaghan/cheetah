@@ -54,7 +54,7 @@ fun stringToSearchQuery(string: String): SearchQuery {
     val fullTextTerms = mutableListOf<String>()
     val queries = mutableListOf<SearchQuery>()
     for (line in string.lines()) {
-        for (term in line.toUpperCase(Locale.ROOT).split(';')) {
+        for (term in line.uppercase(Locale.ROOT).split(';')) {
             if (term.trim().isEmpty()) continue
             when {
                 term.startsWith("S:") -> fullTextTerms.add(term.substring(2))

@@ -1,99 +1,74 @@
-import org.jetbrains.compose.compose
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "1.0.0"
-    id("com.android.library")
-    id("com.squareup.sqldelight")
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
+    id("com.android.kotlin.multiplatform.library")
+    id("app.cash.sqldelight")
 }
 
 group = "com.flannaghan.cheetah"
 version = "1.0"
 
-repositories {
-    google()
-}
-
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 
     android {
-        configurations {
-            create("testApi")
-            create("testDebugApi")
-            create("testReleaseApi")
-        }
+        namespace = "com.flannaghan.cheetah.common"
+        compileSdk = 37
+        minSdk = 24
     }
 
     jvm("desktop") {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
-                api(compose.runtime)
-                api(compose.foundation)
-                api(compose.material)
-                implementation("com.squareup.sqldelight:runtime:1.5.3")
-                implementation("com.squareup.sqldelight:coroutines-extensions:1.5.3")
+                api("org.jetbrains.compose.runtime:runtime:1.12.2")
+                api("org.jetbrains.compose.foundation:foundation:1.12.2")
+                api("org.jetbrains.compose.material:material:1.12.2")
+                implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
+                implementation("app.cash.sqldelight:runtime:2.4.1")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.4.1")
                 implementation("com.google.code.gson:gson:2.8.6")
             }
         }
-        val commonTest by getting {
+        androidMain {
+            dependencies {
+                api("androidx.appcompat:appcompat:1.8.0")
+                api("androidx.core:core-ktx:1.19.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+                implementation("androidx.compose.runtime:runtime-livedata:1.12.1")
+                implementation("app.cash.sqldelight:android-driver:2.4.1")
+            }
+        }
+        getByName("desktopMain") {
+            dependencies {
+                implementation("app.cash.sqldelight:sqlite-driver:2.4.1")
+            }
+        }
+        getByName("desktopTest") {
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
             }
         }
-        val androidMain by getting {
-            dependencies {
-                api("androidx.appcompat:appcompat:1.3.1")
-                api("androidx.core:core-ktx:1.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-                implementation("androidx.compose.runtime:runtime-livedata:1.0.5")
-                implementation("com.squareup.sqldelight:android-driver:1.5.3")
-
-            }
-        }
-        val androidTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:4.13")
-            }
-        }
-        val desktopMain by getting {
-            dependencies {
-                implementation("com.squareup.sqldelight:sqlite-driver:1.5.3")
-                implementation("org.xerial:sqlite-jdbc:3.34.0")
-            }
-        }
-        val desktopTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
-            }
-        }
-    }
-}
-
-android {
-    compileSdkVersion(31)
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(30)
     }
 }
 
 sqldelight {
-    database("WordDatabase") {
-        packageName = "com.flannaghan.cheetah.common.db"
+    databases {
+        create("WordDatabase") {
+            packageName.set("com.flannaghan.cheetah.common.db")
+        }
     }
 }

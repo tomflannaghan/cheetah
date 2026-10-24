@@ -68,43 +68,46 @@ fun DefinitionSpan(elements: List<SpanElement>, modifier: Modifier = Modifier, s
 }
 
 @Composable
-fun List<SpanElement>.buildAnnotatedString(): AnnotatedString = buildAnnotatedString {
-    for (element in this@buildAnnotatedString) {
-        when (element) {
-            is Text -> append(element.text)
-            is Link -> {
-                withStyle(DefinitionTheme.link.toSpanStyle()) {
-                    append(element.text)
+fun List<SpanElement>.buildAnnotatedString(): AnnotatedString {
+    val elements = this
+    return buildAnnotatedString {
+        for (element in elements) {
+            when (element) {
+                is Text -> append(element.text)
+                is Link -> {
+                    withStyle(DefinitionTheme.link.toSpanStyle()) {
+                        append(element.text)
+                    }
                 }
-            }
 
-            is Label -> {
-                withStyle(DefinitionTheme.label.toSpanStyle()) {
-                    append(element.contents.buildAnnotatedString())
+                is Label -> {
+                    withStyle(DefinitionTheme.label.toSpanStyle()) {
+                        append(element.contents.buildAnnotatedString())
+                    }
                 }
-            }
 
-            is Superscript -> {
-                withStyle(DefinitionTheme.superscript.toSpanStyle()) {
-                    append(element.text)
+                is Superscript -> {
+                    withStyle(DefinitionTheme.superscript.toSpanStyle()) {
+                        append(element.text)
+                    }
                 }
-            }
 
-            is Etymology -> {
-                withStyle(DefinitionTheme.etymology.toSpanStyle()) {
-                    append(element.contents.buildAnnotatedString())
+                is Etymology -> {
+                    withStyle(DefinitionTheme.etymology.toSpanStyle()) {
+                        append(element.contents.buildAnnotatedString())
+                    }
                 }
-            }
 
-            is PartOfSpeech -> {
-                withStyle(DefinitionTheme.h2.toSpanStyle()) {
-                    append(element.contents.buildAnnotatedString())
+                is PartOfSpeech -> {
+                    withStyle(DefinitionTheme.h2.toSpanStyle()) {
+                        append(element.contents.buildAnnotatedString())
+                    }
                 }
-            }
 
-            is Highlight -> {
-                withStyle(DefinitionTheme.highlight.toSpanStyle()) {
-                    append(element.contents.buildAnnotatedString())
+                is Highlight -> {
+                    withStyle(DefinitionTheme.highlight.toSpanStyle()) {
+                        append(element.contents.buildAnnotatedString())
+                    }
                 }
             }
         }

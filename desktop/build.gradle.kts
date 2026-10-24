@@ -1,9 +1,10 @@
-import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "1.0.0"
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
 }
 
 group = "com.flannaghan.cheetah"
@@ -11,25 +12,23 @@ version = "1.0"
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
     sourceSets {
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(project(":common"))
                 implementation(compose.desktop.currentOs)
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
             }
         }
     }

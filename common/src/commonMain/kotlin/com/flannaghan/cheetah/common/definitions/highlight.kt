@@ -91,4 +91,4 @@ private fun highlightSpanElementImpl(spanElement: SpanElement, string: String): 
 class UnknownTypeHighlightError(type: String) : DataSourceDecodeError(type)
 
 
-private fun cleanString(string: String): String = string.replace(Regex("[^a-zA-Z ]"), "").toUpperCase()
+private fun cleanString(string: String): String = string.replace(Regex("[^a-zA-Z ]"), "").uppercase()

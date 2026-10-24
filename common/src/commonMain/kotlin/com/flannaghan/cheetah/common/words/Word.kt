@@ -32,7 +32,7 @@ private val LETTER_REGEX = Regex("[^\\p{L}]")
 fun stringToEntry(string: String): String {
     val entry = Normalizer.normalize(string, Normalizer.Form.NFKD)
         .replace(LETTER_REGEX, "")
-        .toUpperCase(Locale.ROOT)
+        .uppercase(Locale.ROOT)
         // There are some cases that need handling specially:
         .replace("Ø", "O")
     return entry

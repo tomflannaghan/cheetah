@@ -73,7 +73,7 @@ class ParseColorError(color: String) : Exception(color)
 
 fun parseColor(color: String): Color {
     val match = Regex("#([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2})")
-        .matchEntire(color.toUpperCase(Locale.ROOT)) ?: throw ParseColorError(color)
+        .matchEntire(color.uppercase(Locale.ROOT)) ?: throw ParseColorError(color)
     val values = match.groupValues
     return Color(values[1].toInt(16), values[2].toInt(16), values[3].toInt(16))
 }
