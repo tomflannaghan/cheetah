@@ -6,3 +6,12 @@
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+# Per-user or regenerated from the Gradle import
+/deploymentTargetDropDown.xml
+/artifacts/
+/libraries-with-intellij-classes.xml
+/gradle.xml
+/misc.xml
+/compiler.xml
+/kotlinc.xml
+/jarRepositories.xml
