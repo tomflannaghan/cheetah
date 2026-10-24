@@ -15,3 +15,11 @@
 /compiler.xml
 /kotlinc.xml
 /jarRepositories.xml
+# Android Studio
+/AndroidProjectSystem.xml
+/caches/
+/copilot.data.migration.*.xml
+/deploymentTargetSelector.xml
+/deviceManager.xml
+/migrations.xml
+/runConfigurations.xml
