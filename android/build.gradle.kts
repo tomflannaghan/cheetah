@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.compose") version "0.3.1"
+    id("org.jetbrains.compose") version "1.0.0"
     id("com.android.application")
     kotlin("android")
 }
@@ -13,11 +13,11 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation("androidx.activity:activity-compose:1.3.0-alpha07")
+    implementation("androidx.activity:activity-compose:1.3.1")
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdkVersion(31)
     defaultConfig {
         applicationId = "com.flannaghan.cheetah.android"
         minSdkVersion(24)

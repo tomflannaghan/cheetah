@@ -2,7 +2,7 @@ import org.jetbrains.compose.compose
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "0.4.0-build182"
+    id("org.jetbrains.compose") version "1.0.0"
     id("com.android.library")
     id("com.squareup.sqldelight")
 }
@@ -38,8 +38,8 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
-                implementation("com.squareup.sqldelight:runtime:1.5.0")
-                implementation("com.squareup.sqldelight:coroutines-extensions:1.5.0")
+                implementation("com.squareup.sqldelight:runtime:1.5.3")
+                implementation("com.squareup.sqldelight:coroutines-extensions:1.5.3")
                 implementation("com.google.code.gson:gson:2.8.6")
             }
         }
@@ -48,16 +48,16 @@ kotlin {
                 implementation(kotlin("test-junit5"))
                 implementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
                 runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
             }
         }
         val androidMain by getting {
             dependencies {
-                api("androidx.appcompat:appcompat:1.3.0-rc01")
+                api("androidx.appcompat:appcompat:1.3.1")
                 api("androidx.core:core-ktx:1.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3")
-                implementation("androidx.compose.runtime:runtime-livedata:1.0.0-beta06")
-                implementation("com.squareup.sqldelight:android-driver:1.5.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+                implementation("androidx.compose.runtime:runtime-livedata:1.0.5")
+                implementation("com.squareup.sqldelight:android-driver:1.5.3")
 
             }
         }
@@ -69,7 +69,7 @@ kotlin {
         }
         val desktopMain by getting {
             dependencies {
-                implementation("com.squareup.sqldelight:sqlite-driver:1.5.0")
+                implementation("com.squareup.sqldelight:sqlite-driver:1.5.3")
                 implementation("org.xerial:sqlite-jdbc:3.34.0")
             }
         }
@@ -84,7 +84,7 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdkVersion(31)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdkVersion(24)
