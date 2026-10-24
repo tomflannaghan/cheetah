@@ -1,6 +1,12 @@
 package com.flannaghan.cheetah.common
 
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.flannaghan.cheetah.common.db.WordDatabase
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -31,13 +37,19 @@ internal class SearchViewModelTest {
     }
 
     @AfterEach
-    fun tearDown() {
+    fun tearDown() = runBlocking {
+        // Wait for the view model's background work to stop before the main dispatcher and the files go.
+        for (viewModel in viewModels) viewModel.viewModelScope.coroutineContext.job.cancelAndJoin()
         Dispatchers.resetMain()
     }
 
+    private val viewModels = mutableListOf<SearchViewModel>()
+
+    private fun createViewModel() = SearchViewModel(DesktopPlatform(dir)).also { viewModels.add(it) }
+
     @Test
     fun search() = runTest {
-        val viewModel = SearchViewModel(DesktopPlatform(dir))
+        val viewModel = createViewModel()
         assertEquals(listOf("A", "B"), viewModel.dataSourcesManager.dataSources.map { it.name })
 
         viewModel.updateQuery("ca")
@@ -52,8 +64,63 @@ internal class SearchViewModelTest {
     }
 
     @Test
+    fun toggleDefinitions() = runTest {
+        writeDefinitionDatabase("c", "C", "To purr")
+        writeDefinitionDatabase("d", "D", "A feline", """, "useDefinitionsByDefault": false""")
+        writeDefinitionDatabase("e", "E", null)
+        val viewModel = createViewModel()
+        assertEquals(listOf("C", "D"), viewModel.definitionDataSources.map { it.name })
+        val (c, d) = viewModel.definitionDataSources
+        assertEquals(setOf(c), viewModel.shownDefinitionDataSources.value)
+
+        viewModel.updateQuery("cat")
+        assertEquals("=cat=\nTo purr", viewModel.definition.first { it.isNotEmpty() })
+
+        viewModel.toggleDefinitionDataSource(d)
+        assertEquals("=cat=\nTo purr\n=cat=\nA feline", viewModel.definition.first { "feline" in it })
+
+        viewModel.toggleDefinitionDataSource(c)
+        assertEquals("=cat=\nA feline", viewModel.definition.first { "purr" !in it })
+    }
+
+    @Test
+    fun fullTextSearchUsesShownDefinitions() = runTest {
+        writeDefinitionDatabase("c", "C", "To purr")
+        writeDefinitionDatabase("d", "D", "A feline", """, "useDefinitionsByDefault": false""")
+        val viewModel = createViewModel()
+        val (_, d) = viewModel.definitionDataSources
+
+        viewModel.updateQuery("s:feline")
+        assertEquals(listOf<String>(), viewModel.result.first { it.query == "s:feline" }.words)
+
+        viewModel.toggleDefinitionDataSource(d)
+        assertEquals(listOf("cat"), viewModel.result.first { it.words.isNotEmpty() }.words.map { it.string })
+    }
+
+    /**
+     * Writes a SQLite source [name] with just the word "cat", defined as [definition] unless that is null.
+     */
+    private fun writeDefinitionDatabase(
+        name: String, displayName: String, definition: String?, extraConfig: String = ""
+    ) {
+        File(dir, "$name.json").writeText(
+            """{"name": "$displayName", "color": "#000000", "type": "SqliteWordDatabase"$extraConfig}"""
+        )
+        JdbcSqliteDriver("jdbc:sqlite:${File(dir, "$name.sqlite")}").use { driver ->
+            WordDatabase.Schema.create(driver)
+            driver.execute(null, "INSERT INTO word VALUES (1, 'cat', 'CAT')", 0)
+            if (definition != null) {
+                driver.execute(
+                    null, "INSERT INTO definition (rowid, word, text) VALUES (1, 'cat', '=cat=\n$definition')", 0
+                )
+                driver.execute(null, "INSERT INTO wordDefinition VALUES (1, 0, 1)", 0)
+            }
+        }
+    }
+
+    @Test
     fun blankQueryHasNoResults() = runTest {
-        val viewModel = SearchViewModel(DesktopPlatform(dir))
+        val viewModel = createViewModel()
         viewModel.updateQuery("ca")
         viewModel.result.first { it.query == "ca" }
         viewModel.updateQuery(" ")

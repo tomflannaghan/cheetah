@@ -18,10 +18,14 @@ abstract class DataSource(val name: String, val color: Color, val defaults: Data
 }
 
 /**
- * A data source that can also look up and search definitions.
+ * A data source that can also look up and search definitions, and find words linked by relationships.
  */
 abstract class DefinitionDataSource(name: String, color: Color, defaults: DataSourceDefaults) :
     DataSource(name, color, defaults) {
+    /**
+     * Whether there are any definitions. Some sources, such as a thesaurus, have only relationships.
+     */
+    abstract fun hasDefinitions(): Boolean
     abstract suspend fun lookupDefinition(word: Word): String
     abstract suspend fun fullTextSearch(allWords: List<Word>, pattern: String): List<Word>
     abstract suspend fun findLinkedWords(allWords: List<Word>, word: String): List<Word>

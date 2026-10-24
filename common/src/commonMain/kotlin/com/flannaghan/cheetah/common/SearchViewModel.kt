@@ -26,8 +26,8 @@ import kotlinx.coroutines.withContext
 class SearchViewModel(platform: Platform) : ViewModel() {
     val dataSourcesManager = DataSourcesManager(dataSources(platform))
 
-    private val definitionDataSources = dataSourcesManager.dataSources.filterIsInstance<DefinitionDataSource>()
-    private val fullTextSearchDataSource = definitionDataSources.firstOrNull { it.defaults.useDefinitions }
+    private val relationshipDataSources = dataSourcesManager.dataSources.filterIsInstance<DefinitionDataSource>()
+    val definitionDataSources = relationshipDataSources.filter { it.hasDefinitions() }
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
@@ -35,6 +35,10 @@ class SearchViewModel(platform: Platform) : ViewModel() {
     private val _wordListDataSources =
         MutableStateFlow(dataSourcesManager.dataSources.filter { it.defaults.useWordList }.toSet())
     val wordListDataSources: StateFlow<Set<DataSource>> = _wordListDataSources.asStateFlow()
+
+    private val _shownDefinitionDataSources =
+        MutableStateFlow(definitionDataSources.filter { it.defaults.useDefinitions }.toSet())
+    val shownDefinitionDataSources: StateFlow<Set<DefinitionDataSource>> = _shownDefinitionDataSources.asStateFlow()
 
     private val _result = MutableStateFlow(SearchResult(true, "", emptyList()))
     val result: StateFlow<SearchResult> = _result.asStateFlow()
@@ -46,7 +50,7 @@ class SearchViewModel(platform: Platform) : ViewModel() {
     val definition: StateFlow<String> = _definition.asStateFlow()
 
     // Only the search collector below uses this, and collectLatest runs one search at a time.
-    private var cachedSearchContext: Pair<Set<DataSource>, SearchContext>? = null
+    private var cachedSearchContext: Pair<Pair<Set<DataSource>, Set<DefinitionDataSource>>, SearchContext>? = null
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -55,17 +59,21 @@ class SearchViewModel(platform: Platform) : ViewModel() {
         }
         viewModelScope.launch {
             // A new query or data source selection cancels the search in progress.
-            combine(_query, _wordListDataSources, ::Pair).collectLatest { (query, dataSources) ->
-                _result.value = withContext(Dispatchers.Default) { runSearch(query, dataSources) }
-            }
-        }
-        viewModelScope.launch {
-            combine(_result, _selectedWordIndex) { result, index -> index?.let { result.words.getOrNull(it) } }
-                .collectLatest { word ->
-                    _definition.value = if (word == null) "" else withContext(Dispatchers.Default) {
-                        lookupDefinition(word)
+            combine(_query, _wordListDataSources, _shownDefinitionDataSources, ::Triple)
+                .collectLatest { (query, wordListDataSources, definitionDataSources) ->
+                    _result.value = withContext(Dispatchers.Default) {
+                        runSearch(query, wordListDataSources, definitionDataSources)
                     }
                 }
+        }
+        viewModelScope.launch {
+            val selectedWord =
+                combine(_result, _selectedWordIndex) { result, index -> index?.let { result.words.getOrNull(it) } }
+            combine(selectedWord, _shownDefinitionDataSources, ::Pair).collectLatest { (word, dataSources) ->
+                _definition.value = if (word == null) "" else withContext(Dispatchers.Default) {
+                    lookupDefinition(word, dataSources)
+                }
+            }
         }
     }
 
@@ -82,34 +90,46 @@ class SearchViewModel(platform: Platform) : ViewModel() {
         _wordListDataSources.update { if (dataSource in it) it - dataSource else it + dataSource }
     }
 
-    private suspend fun runSearch(query: String, dataSources: Set<DataSource>): SearchResult {
+    fun toggleDefinitionDataSource(dataSource: DefinitionDataSource) {
+        _shownDefinitionDataSources.update { if (dataSource in it) it - dataSource else it + dataSource }
+    }
+
+    private suspend fun runSearch(
+        query: String, wordListDataSources: Set<DataSource>, definitionDataSources: Set<DefinitionDataSource>
+    ): SearchResult {
         if (query.isBlank()) return SearchResult(true, query, emptyList())
-        val context = searchContext(dataSources)
+        val context = searchContext(wordListDataSources, definitionDataSources)
         return context.withEvaluation { search(query, context) }
     }
 
     /**
-     * Returns the SearchContext for the data sources. It is expensive to build, so the last one is reused until the
-     * data sources change.
+     * Returns the SearchContext for the data sources. Full-text search covers the selected definition sources. A
+     * context is expensive to build, so the last one is reused until the data sources change.
      */
-    private suspend fun searchContext(dataSources: Set<DataSource>): SearchContext {
-        cachedSearchContext?.let { (cachedDataSources, context) -> if (cachedDataSources == dataSources) return context }
+    private suspend fun searchContext(
+        wordListDataSources: Set<DataSource>, definitionDataSources: Set<DefinitionDataSource>
+    ): SearchContext {
+        val key = wordListDataSources to definitionDataSources
+        cachedSearchContext?.let { (cachedKey, context) -> if (cachedKey == key) return context }
         val context = SearchContext(
-            dataSourcesManager.getAllWords(dataSources.toList()),
-            fullTextSearch = fullTextSearchDataSource?.let { source ->
-                { query, words -> source.fullTextSearch(words, query) }
+            dataSourcesManager.getAllWords(wordListDataSources.toList()),
+            fullTextSearch = { query, words ->
+                definitionDataSources.flatMap { it.fullTextSearch(words, query) }.distinct()
             },
             relationshipSearch = { query, words ->
-                definitionDataSources.flatMap { it.findLinkedWords(words, query) }.distinct()
+                relationshipDataSources.flatMap { it.findLinkedWords(words, query) }.distinct()
             },
         )
-        cachedSearchContext = dataSources to context
+        cachedSearchContext = key to context
         return context
     }
 
-    private suspend fun lookupDefinition(word: Word): String = coroutineScope {
+    /**
+     * Returns the definitions of [word] from each of [dataSources], in the order of [definitionDataSources].
+     */
+    private suspend fun lookupDefinition(word: Word, dataSources: Set<DefinitionDataSource>): String = coroutineScope {
         definitionDataSources
-            .filter { it.defaults.useDefinitions }
+            .filter { it in dataSources }
             .map { async { it.lookupDefinition(word) } }
             .awaitAll()
             .joinToString("\n")

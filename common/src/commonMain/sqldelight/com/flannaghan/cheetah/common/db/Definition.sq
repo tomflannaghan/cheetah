@@ -27,3 +27,5 @@ JOIN word ON word.id = wordDefinition.id_word
 JOIN derivedWord ON derivedWord.id_word_parent = word.id
 JOIN word AS derived ON derivedWord.id_word = derived.id
 WHERE definition MATCH ?;
+hasDefinitions:
+SELECT EXISTS (SELECT 1 FROM definition);

@@ -2,6 +2,8 @@ package com.flannaghan.cheetah.common.gui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -13,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flannaghan.cheetah.common.SearchViewModel
 import com.flannaghan.cheetah.common.datasource.DataSource
+import com.flannaghan.cheetah.common.datasource.DefinitionDataSource
 import com.flannaghan.cheetah.common.search.fullTextSearchTerms
 import kotlinx.coroutines.launch
 
@@ -22,6 +25,7 @@ fun App(viewModel: SearchViewModel) {
         val scaffoldState = rememberScaffoldState()
         val coroutineScope = rememberCoroutineScope()
         val wordListDataSources by viewModel.wordListDataSources.collectAsStateWithLifecycle()
+        val shownDefinitionDataSources by viewModel.shownDefinitionDataSources.collectAsStateWithLifecycle()
         Scaffold(
             scaffoldState = scaffoldState,
             contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
@@ -40,7 +44,10 @@ fun App(viewModel: SearchViewModel) {
                 Menu(
                     viewModel.dataSourcesManager.dataSources,
                     wordListDataSources,
-                    onToggleDataSource = viewModel::toggleWordListDataSource,
+                    onToggleWordListDataSource = viewModel::toggleWordListDataSource,
+                    viewModel.definitionDataSources,
+                    shownDefinitionDataSources,
+                    onToggleDefinitionDataSource = viewModel::toggleDefinitionDataSource,
                 )
             }
         ) { padding ->
@@ -51,9 +58,12 @@ fun App(viewModel: SearchViewModel) {
 
 @Composable
 fun Menu(
-    dataSources: List<DataSource>,
-    enabledDataSources: Set<DataSource>,
-    onToggleDataSource: (DataSource) -> Unit,
+    wordListDataSources: List<DataSource>,
+    enabledWordListDataSources: Set<DataSource>,
+    onToggleWordListDataSource: (DataSource) -> Unit,
+    definitionDataSources: List<DefinitionDataSource>,
+    enabledDefinitionDataSources: Set<DefinitionDataSource>,
+    onToggleDefinitionDataSource: (DefinitionDataSource) -> Unit,
 ) {
     Column {
         TopAppBar(
@@ -61,14 +71,24 @@ fun Menu(
             windowInsets = AppBarDefaults.topAppBarWindowInsets,
             backgroundColor = MaterialTheme.colors.secondary,
         )
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(10.dp).verticalScroll(rememberScrollState())) {
             Text("Word Lists", style = MaterialTheme.typography.h6)
-            for (dataSource in dataSources) {
+            for (dataSource in wordListDataSources) {
                 DataSourceMenuRow(
                     dataSource,
-                    enabled = dataSource in enabledDataSources,
-                    onClick = { onToggleDataSource(dataSource) },
+                    enabled = dataSource in enabledWordListDataSources,
+                    onClick = { onToggleWordListDataSource(dataSource) },
                 )
+            }
+            if (definitionDataSources.isNotEmpty()) {
+                Text("Definitions", style = MaterialTheme.typography.h6, modifier = Modifier.padding(top = 10.dp))
+                for (dataSource in definitionDataSources) {
+                    DataSourceMenuRow(
+                        dataSource,
+                        enabled = dataSource in enabledDefinitionDataSources,
+                        onClick = { onToggleDefinitionDataSource(dataSource) },
+                    )
+                }
             }
         }
     }

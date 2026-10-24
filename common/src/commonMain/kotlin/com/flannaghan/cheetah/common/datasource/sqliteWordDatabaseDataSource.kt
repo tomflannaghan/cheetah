@@ -19,6 +19,8 @@ class SqliteWordDatabaseDataSource(
             .filter { it.entry.isNotEmpty() }
     }
 
+    override fun hasDefinitions(): Boolean = db.definitionQueries.hasDefinitions().executeAsOne()
+
     override suspend fun lookupDefinition(word: Word): String {
         // We use entries rather than words here. Could easily switch if we wanted.
         val words = db.wordQueries.wordsForEntry(word.entry).executeAsList().map { it.word }

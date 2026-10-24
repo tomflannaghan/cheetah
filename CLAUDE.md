@@ -41,8 +41,8 @@ Gradle itself runs on the system Java, which is a JRE. Compilation uses a JDK 21
 
 - Word list `.txt`: one `display string<TAB>CANONICAL` pair per line. Lines with an empty canonical form are dropped.
 - `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 32 sources).
-- `useWordListByDefault` sets which sources start selected in the drawer. `useDefinitionsByDefault` sets which sources are shown in the definition pane.
-- `s:` searches only the **first** SQLite source with `useDefinitionsByDefault`, in file-name order. `r:` searches **every** SQLite source, whatever its flags.
+- `useWordListByDefault` sets which sources start selected under "Word Lists" in the drawer. `useDefinitionsByDefault` sets which SQLite sources start selected under "Definitions". The selected ones are shown in the definition pane, in file-name order. SQLite sources with an empty `definition` table, such as Bradford's thesaurus, aren't listed there.
+- `s:` searches every source selected under "Definitions" and merges the results. `r:` searches **every** SQLite source, whatever its flags.
 
 Paths: desktop reads the `cheetah.dataDir` system property, which `desktop/build.gradle.kts` (for `run`) and `common/build.gradle.kts` (for tests) set to this repo's `data/`. Android uses `context.dataDir`, so copy the files to `/data/data/com.flannaghan.cheetah.android/` with `scripts/push-android-data.sh` (see `README.md`).
 
