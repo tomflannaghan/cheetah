@@ -1,7 +1,7 @@
 package com.flannaghan.cheetah.common.search
 
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -9,7 +9,7 @@ internal class MatcherTest {
     @Test
     fun regexMatch() {
         val matcher = RegexMatcher("A.C")
-        runBlocking {
+        runTest {
             assertEquals(
                 listOf(true, false, true),
                 matcher.match(SearchContext(listOf("AQC", "AOO", "ABC").map { Word("?", it) }))
@@ -20,7 +20,7 @@ internal class MatcherTest {
     @Test
     fun numWordsMatch() {
         val matcher = NumWordsMatcher(3)
-        runBlocking {
+        runTest {
             assertEquals(
                 listOf(false, false, true, false),
                 matcher.match(SearchContext(listOf(
@@ -37,7 +37,7 @@ internal class MatcherTest {
     fun parallelMatch() {
         val matcher = ParallelChunkMatcher(RegexMatcher(".."), 10)
         val entries = (1..10).flatMap { listOf("A", "B", "C", "AA", "BB", "CC") }.shuffled()
-        runBlocking {
+        runTest {
             assertEquals(
                 entries.map { it.length == 2 },
                 matcher.match(SearchContext(entries.map { Word("?", it) }))
@@ -48,7 +48,7 @@ internal class MatcherTest {
     @Test
     fun andMatch() {
         val matcher = AndMatcher(RegexMatcher("[1-5]"), RegexMatcher("[3-7]"))
-        runBlocking {
+        runTest {
             assertEquals(
                 listOf(false, true, false, false),
                 matcher.match(SearchContext(listOf("1", "4", "7", "XXX").map { Word("?", it) }))

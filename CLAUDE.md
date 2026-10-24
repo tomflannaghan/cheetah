@@ -4,13 +4,13 @@ A crossword-solving dictionary app: type a pattern, get matching words, see thei
 
 ## Building from the terminal
 
-Use Android Studio's bundled JDK. The system Java (`/usr/lib/jvm/java-25-openjdk`) is a JRE with no `javac`, which the Android build needs:
-
 ```sh
-JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :android:assembleDebug :common:desktopTest
+./gradlew :android:assembleDebug :common:desktopTest
 ```
 
-`:desktop:run` launches the desktop app. Toolchain: Gradle 9.8, Kotlin 2.4, Compose Multiplatform 1.12, AGP 9.4, SQLDelight 2.4 (`app.cash`). JVM target is 11.
+Gradle itself runs on the system Java, which is a JRE. Compilation uses a JDK 21 toolchain (`jvmToolchain`), which the foojay resolver plugin downloads into `~/.gradle/jdks` if none is installed. So no `JAVA_HOME` is needed.
+
+`:desktop:run` launches the desktop app. Versions are in `gradle/libs.versions.toml`: Gradle 9.8, Kotlin 2.4, Compose Multiplatform 1.12, AGP 9.4, SQLDelight 2.4 (`app.cash`), lifecycle 2.11, kotlinx.serialization.
 
 ## Layout
 
@@ -37,10 +37,10 @@ JAVA_HOME=~/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :an
 
 ## Data sources
 
-`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. A config that fails to decode, has a bad colour or points at a missing file throws `DataSourceDecodeError`, which `dataSources()` prints and skips. Configs are read in file-name order. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
+`dataSources()` reads every `*.json` in the data directory. Each config names a sibling `.txt` (`TextFileWordList`) or `.sqlite` (`SqliteWordDatabase`) file with the same basename. Configs are decoded with kotlinx.serialization and read in file-name order. A config that fails to decode, has a bad colour or points at a missing file throws `InvalidDataSourceException`, which `dataSources()` prints and skips. Files without a `.json`, such as a backed-up `wiktionary-2021.sqlite`, are ignored. Only `ukacd.*` and `wiktionary.json` are tracked in git. The other configs and lists in `data/` are local.
 
 - Word list `.txt`: one `display string<TAB>CANONICAL` pair per line. Lines with an empty canonical form are dropped.
-- `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 31 sources).
+- `DataSourcesManager` merges every source's words into one sorted list and tags each word with a bitmask of its sources (`1 shl index`, an `Int`, so at most 32 sources).
 - `useWordListByDefault` sets which sources start selected in the drawer. `useDefinitionsByDefault` sets which sources are shown in the definition pane.
 - `s:` searches only the **first** SQLite source with `useDefinitionsByDefault`, in file-name order. `r:` searches **every** SQLite source, whatever its flags.
 

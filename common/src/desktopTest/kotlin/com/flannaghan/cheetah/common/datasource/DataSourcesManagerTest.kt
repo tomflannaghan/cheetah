@@ -2,7 +2,7 @@ package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -23,7 +23,7 @@ internal class DataSourcesManagerTest {
     @Test
     fun getAllWords() {
         val manager = DataSourcesManager(listOf(dummySource1, dummySource2))
-        runBlocking {
+        runTest {
             assertEquals(listOf<Word>(), manager.getAllWords(listOf()))
             assertEquals(
                 dummySource1.words.map { Word(it.string, it.entry, 0b01) },
@@ -50,7 +50,7 @@ internal class DataSourcesManagerTest {
     fun getAllWords2() {
         // Same as above, but populates the data sources manager in a different order.
         val manager = DataSourcesManager(listOf(dummySource1, dummySource2))
-        runBlocking {
+        runTest {
             assertEquals(
                 listOf(
                     Word("foo", "FOO", 0b01),

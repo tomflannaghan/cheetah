@@ -15,7 +15,7 @@ sealed class Component
 
 data class Letter(val letter: Char) : Component()
 data class Anagram(val letterCounts: Map<Char, Int>, val numberOfDots: Int) : Component()
-object Dot : Component()
+data object Dot : Component()
 data class SubWord(val backwards: Boolean = false) : Component()
 data class SubWordMatch(val matcher: Matcher, val backwards: Boolean = false) : Component()
 

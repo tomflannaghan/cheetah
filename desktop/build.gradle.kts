@@ -1,35 +1,22 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.compose")
-    id("org.jetbrains.compose")
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose.multiplatform)
 }
 
-group = "com.flannaghan.cheetah"
-version = "1.0"
-
 kotlin {
-    jvm {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
-    }
+    jvmToolchain(libs.versions.java.get().toInt())
+
+    jvm()
+
     sourceSets {
         jvmMain {
             dependencies {
                 implementation(project(":common"))
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
-            }
-        }
-        jvmTest {
-            dependencies {
-                implementation(kotlin("test-junit5"))
+                implementation(libs.kotlinx.coroutines.swing)
             }
         }
     }
@@ -41,7 +28,7 @@ compose.desktop {
         jvmArgs += "-Dcheetah.dataDir=${rootProject.file("data").absolutePath}"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "jvm"
+            packageName = "Cheetah"
             packageVersion = "1.0.0"
         }
     }

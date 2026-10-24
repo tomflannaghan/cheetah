@@ -7,8 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -18,12 +20,12 @@ import kotlinx.coroutines.delay
 fun ProgressTextField(
     text: String,
     onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
     isError: Boolean = false,
     isBusy: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions(),
-    modifier: Modifier = Modifier,
 ) {
-    val showProgressIndicator = remember { mutableStateOf(false) }
+    var showProgressIndicator by remember { mutableStateOf(false) }
     val colors = if (isError)
         TextFieldDefaults.textFieldColors(MaterialTheme.colors.error)
     else
@@ -31,7 +33,7 @@ fun ProgressTextField(
 
     LaunchedEffect(isBusy) {
         if (isBusy) delay(1000)
-        showProgressIndicator.value = isBusy
+        showProgressIndicator = isBusy
     }
 
     Box {
@@ -49,7 +51,7 @@ fun ProgressTextField(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.matchParentSize()
         ) {
-            if (showProgressIndicator.value) {
+            if (showProgressIndicator) {
                 CircularProgressIndicator()
             }
             IconButton(onClick = { onValueChange("") }) {

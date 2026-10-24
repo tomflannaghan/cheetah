@@ -10,7 +10,7 @@ sealed class DefinitionPart
 /**
  * Block elements that occupy whole lines.
  */
-abstract class LineElement : DefinitionPart()
+sealed class LineElement : DefinitionPart()
 data class Heading(
     val contents: List<SpanElement>, val level: Int,
     val detail: List<SpanElement> = listOf()
@@ -22,12 +22,12 @@ data class Paragraph(val contents: List<SpanElement>) : LineElement()
 /**
  * Span elements that form text.
  */
-abstract class SpanElement : DefinitionPart()
-abstract class LeafSpanElement : SpanElement() {
+sealed class SpanElement : DefinitionPart()
+sealed class LeafSpanElement : SpanElement() {
     abstract val text: String
 }
 
-abstract class ContentsSpanElement : SpanElement() {
+sealed class ContentsSpanElement : SpanElement() {
     abstract val contents: List<SpanElement>
     abstract fun withNewContents(newContents: List<SpanElement>): ContentsSpanElement
 }

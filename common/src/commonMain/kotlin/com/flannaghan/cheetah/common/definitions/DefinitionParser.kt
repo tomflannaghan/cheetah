@@ -2,19 +2,18 @@ package com.flannaghan.cheetah.common.definitions
 
 import kotlin.text.Regex.Companion.escape
 
+private val HEADING_REGEX = Regex("(=+)(.+?)(=+)(.*)")
+private val ORDERED_LIST_REGEX = Regex("(#+)(.*)")
+private val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")  // Removes the target of links.
+
 /**
- * Wiki syntax is taken from wikipedia.
+ * Parses definitions written in a wiki-like syntax, taken from Wikipedia.
  * Supports:
  * - only headers and ordered lists for structure (anything else will be skipped).
  * - links [[xxx|Xxx]] or [[...]].
  * - labels {{xxx}}.
- * - superscript <sup>..</sup>
+ * - superscript <sup>..</sup>, etymologies <etym>..</etym> and parts of speech <~..~>.
  */
-
-val HEADING_REGEX = Regex("(=+)(.+?)(=+)(.*)")
-val ORDERED_LIST_REGEX = Regex("(#+)+(.*)")
-val LINK_REGEX = Regex("(.+?\\|)?+(.+?)")  // Removes the target of links.
-
 class DefinitionParser {
     private val orderedListStack = ArrayDeque<Int>()
 
@@ -51,8 +50,8 @@ class DefinitionParser {
         Bracket("[[", "]]") {
             var linkContents = LINK_REGEX.matchEntire(it)?.groupValues?.last() ?: it
             // Links can't contain elements themselves so remove all brackets.
-            for (seperator in listOf("{{", "}}", "[[", "]]")) {
-                linkContents = linkContents.replace(seperator, "")
+            for (separator in listOf("{{", "}}", "[[", "]]")) {
+                linkContents = linkContents.replace(separator, "")
             }
             Link(linkContents)
         },

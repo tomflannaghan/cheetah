@@ -1,9 +1,7 @@
 package com.flannaghan.cheetah.common.definitions
 
-import com.flannaghan.cheetah.common.datasource.DataSourceDecodeError
-
 fun highlightDefinition(definition: Definition, string: String): Definition {
-    return definition.copy(children = definition.children.map{highlightLineElement(it, string)})
+    return definition.copy(children = definition.children.map { highlightLineElement(it, string) })
 }
 
 
@@ -19,8 +17,6 @@ fun highlightLineElement(lineElement: LineElement, string: String): LineElement 
             contents = highlightSpanElements(lineElement.contents, cleanedString),
             detail = highlightSpanElements(lineElement.detail, cleanedString)
         )
-
-        else -> throw UnknownTypeHighlightError(lineElement.javaClass.typeName)
     }
 }
 
@@ -69,26 +65,22 @@ private fun highlightSpanElementsImpl(
 }
 
 private fun highlightSpanElementImpl(spanElement: SpanElement, string: String): Pair<SpanElement, String> {
-    when (spanElement) {
+    return when (spanElement) {
         is LeafSpanElement -> {
             val text = cleanString(spanElement.text)
-            return if (string in text) Pair(Highlight(listOf(spanElement)), text.replace(string, ""))
+            if (string in text) Pair(Highlight(listOf(spanElement)), text.replace(string, ""))
             else Pair(spanElement, text)
         }
 
         is ContentsSpanElement -> {
             val (newContents, text) = highlightSpanElementsImpl(spanElement.contents, string)
             val newSpanElement = spanElement.withNewContents(newContents)
-            return if (string in text) Pair(Highlight(listOf(newSpanElement)), text.replace(string, ""))
+            if (string in text) Pair(Highlight(listOf(newSpanElement)), text.replace(string, ""))
             else Pair(newSpanElement, text)
         }
-
-        else -> throw UnknownTypeHighlightError(spanElement.javaClass.typeName)
     }
 }
 
+private val NON_LETTER_OR_SPACE_REGEX = Regex("[^a-zA-Z ]")
 
-class UnknownTypeHighlightError(type: String) : DataSourceDecodeError(type)
-
-
-private fun cleanString(string: String): String = string.replace(Regex("[^a-zA-Z ]"), "").uppercase()
+private fun cleanString(string: String): String = string.replace(NON_LETTER_OR_SPACE_REGEX, "").uppercase()

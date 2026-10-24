@@ -57,14 +57,14 @@ data class LengthMatcher(val min: Int?, val max: Int?) : Matcher() {
     override val children = emptyList<Matcher>()
 }
 
+private val WHITESPACE_REGEX = Regex("\\s+")
+
 /**
- * Num Words matching.
+ * Matches phrases of [num] words.
  */
 data class NumWordsMatcher(val num: Int) : Matcher() {
     override suspend fun match(context: SearchContext, words: List<Word>): List<Boolean> =
-        words.map {
-            it.string.split(Regex("\\s+")).size == num
-        }
+        words.map { it.string.split(WHITESPACE_REGEX).size == num }
 
     override val children = emptyList<Matcher>()
 }

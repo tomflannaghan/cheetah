@@ -6,13 +6,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T> ListWithKeyboardInteraction(
     items: List<T>,

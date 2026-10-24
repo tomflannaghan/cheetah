@@ -3,7 +3,7 @@ package com.flannaghan.cheetah.common.datasource
 import androidx.compose.ui.graphics.Color
 import com.flannaghan.cheetah.common.DesktopPlatform
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ internal class SqliteWordDatabaseDataSourceKtTest {
         assertEquals("wiktionary", source.name)
         assertEquals(Color.Blue, source.color)
         val testWord = Word("goat", "GOAT")
-        runBlocking {
+        runTest {
             val words = source.getWords()
             assertTrue(testWord in words)
             val definition = source.lookupDefinition(testWord)

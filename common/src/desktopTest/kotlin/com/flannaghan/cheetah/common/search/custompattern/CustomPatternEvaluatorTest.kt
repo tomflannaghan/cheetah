@@ -3,7 +3,7 @@ package com.flannaghan.cheetah.common.search.custompattern
 import com.flannaghan.cheetah.common.search.RegexMatcher
 import com.flannaghan.cheetah.common.search.SearchContext
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,7 +12,7 @@ internal class CustomPatternEvaluatorTest {
     val context = SearchContext(listOf("BAT", "HAT", "HOG", "HA", "TAT").map { Word("?", it) })
 
     @Test
-    fun letters() = runBlocking {
+    fun letters() = runTest {
         val pattern = CustomPattern(Letter('H'), Letter('I'))
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match(context, "HI"))
@@ -22,7 +22,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun anagram() = runBlocking {
+    fun anagram() = runTest {
         val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'S' to 2), 0))
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match(context, "SAS"))
@@ -33,7 +33,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun dottedAnagram() = runBlocking {
+    fun dottedAnagram() = runTest {
         val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'S' to 2), 2))
         val evaluator = CustomPatternEvaluator(pattern)
         assertFalse(evaluator.match(context, "SAS"))
@@ -45,7 +45,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun consecutiveAnagrams() = runBlocking {
+    fun consecutiveAnagrams() = runTest {
         val pattern = CustomPattern(Anagram(mapOf('A' to 1, 'B' to 1), 0), Anagram(mapOf('C' to 1, 'D' to 1), 0))
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match(context, "BADC"))
@@ -53,7 +53,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun anagramsSeparatedByDot() = runBlocking {
+    fun anagramsSeparatedByDot() = runTest {
         val pattern = CustomPattern(
             Anagram(mapOf('A' to 1, 'B' to 1), 0), Dot, Anagram(mapOf('C' to 1, 'D' to 1), 0)
         )
@@ -62,7 +62,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun dot() = runBlocking {
+    fun dot() = runTest {
         val pattern = CustomPattern(Dot, Dot)
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match(context, "HI"))
@@ -72,7 +72,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun misprint() = runBlocking {
+    fun misprint() = runTest {
         val pattern = CustomPattern(Letter('H'), Letter('I'), Dot, misprints = 1)
         val evaluator = CustomPatternEvaluator(pattern)
         assertFalse(evaluator.match(context, "HI"))
@@ -83,7 +83,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun misprintAnagrams() = runBlocking {
+    fun misprintAnagrams() = runTest {
         val pattern = CustomPattern(
             Letter('H'),
             Anagram(mapOf('A' to 1, 'B' to 2), 1),
@@ -100,7 +100,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun subWord() = runBlocking {
+    fun subWord() = runTest {
         val pattern = CustomPattern(SubWord(), Letter('T'))
         val evaluator = CustomPatternEvaluator(pattern)
         assertFalse(evaluator.match(context, "HATQ"))
@@ -110,7 +110,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun subWords() = runBlocking {
+    fun subWords() = runTest {
         val pattern = CustomPattern(SubWord(), SubWord())
         val evaluator = CustomPatternEvaluator(pattern)
         assertTrue(evaluator.match(context, "HATTAT"))
@@ -120,7 +120,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun subWordBackwards() = runBlocking {
+    fun subWordBackwards() = runTest {
         val pattern = CustomPattern(SubWord(true), Letter('T'))
         val evaluator = CustomPatternEvaluator(pattern)
         assertFalse(evaluator.match(context, "TAHQ"))
@@ -131,7 +131,7 @@ internal class CustomPatternEvaluatorTest {
     }
 
     @Test
-    fun subWordMatch() = runBlocking {
+    fun subWordMatch() = runTest {
         val matcher = RegexMatcher("H..")
         val pattern = CustomPattern(SubWordMatch(matcher, true), Letter('T'))
         val evaluator = CustomPatternEvaluator(pattern)

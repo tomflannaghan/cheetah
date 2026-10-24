@@ -3,10 +3,11 @@ package com.flannaghan.cheetah.common.search
 import com.flannaghan.cheetah.common.DesktopPlatform
 import com.flannaghan.cheetah.common.datasource.DataSourcesManager
 import com.flannaghan.cheetah.common.datasource.dataSources
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * This isn't really a test, rather a set of benchmarks for profiling/keeping track of performance. Making them
@@ -14,7 +15,7 @@ import kotlin.system.measureTimeMillis
  */
 class ProfilingTest {
     @Test
-    fun search() = runBlocking {
+    fun search() = runTest(timeout = 5.minutes) {
         val manager = DataSourcesManager(dataSources(DesktopPlatform()))
         val context = SearchContext(manager.getAllWords(manager.dataSources.filter { it.defaults.useWordList }))
         assertTrue(search("z", context).success)

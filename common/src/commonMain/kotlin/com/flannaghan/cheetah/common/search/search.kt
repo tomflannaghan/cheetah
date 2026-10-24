@@ -1,28 +1,21 @@
 package com.flannaghan.cheetah.common.search
 
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CancellationException
 
-
-suspend fun search(
-    query: String,
-    context: SearchContext
-): SearchResult = coroutineScope {
-    var matches: List<Word>
-    var success = false
-    try {
+/**
+ * Runs [query] against the words in [context]. An invalid query gives an unsuccessful result with no words.
+ */
+suspend fun search(query: String, context: SearchContext): SearchResult {
+    return try {
         val matcher = optimize(searchQueryToMatcher(stringToSearchQuery(query)))
-        matches = matcher.matchingWords(context)
-        // We succeeded - mark as such.
-        success = true
+        SearchResult(true, query, matcher.matchingWords(context))
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
-        // Reset matches. In case of error we report no matches.
         println(e)
-        matches = emptyList()
+        SearchResult(false, query, emptyList())
     }
-
-    SearchResult(success, query, matches)
 }
-
 
 data class SearchResult(val success: Boolean, val query: String, val words: List<Word>)

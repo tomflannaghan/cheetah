@@ -1,7 +1,7 @@
 package com.flannaghan.cheetah.common.search
 
 import com.flannaghan.cheetah.common.words.Word
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -17,7 +17,7 @@ internal class SearchKtTest {
 
     @Test
     fun simpleSearch() {
-        runBlocking {
+        runTest {
             val result = search("a.c", sampleContext)
             assertTrue(result.success)
             assertEquals(listOf("a b-c", "agc"), result.words.map { it.string })
@@ -26,7 +26,7 @@ internal class SearchKtTest {
 
     @Test
     fun failSearch() {
-        runBlocking {
+        runTest {
             val result = search("a.c[", sampleContext)
             assertFalse(result.success)
             assertEquals(listOf<String>(), result.words.map { it.string })
@@ -35,7 +35,7 @@ internal class SearchKtTest {
 
     @Test
     fun andSearch() {
-        runBlocking {
+        runTest {
             val result = search("a.c\n.b.", sampleContext)
             assertTrue(result.success)
             assertEquals(listOf("a b-c"), result.words.map { it.string })

@@ -1,63 +1,58 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.compose")
-    id("org.jetbrains.compose")
-    id("com.android.kotlin.multiplatform.library")
-    id("app.cash.sqldelight")
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.sqldelight)
 }
 
-group = "com.flannaghan.cheetah"
-version = "1.0"
-
 kotlin {
+    jvmToolchain(libs.versions.java.get().toInt())
+
     android {
         namespace = "com.flannaghan.cheetah.common"
-        compileSdk = 37
-        minSdk = 24
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 
     jvm("desktop") {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
             // The tests read the real word lists and databases.
             systemProperty("cheetah.dataDir", rootProject.file("data").absolutePath)
         }
     }
+
     sourceSets {
         commonMain {
             dependencies {
-                api("org.jetbrains.compose.runtime:runtime:1.12.2")
-                api("org.jetbrains.compose.foundation:foundation:1.12.2")
-                api("org.jetbrains.compose.material:material:1.12.2")
-                api("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
-                implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-                implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
-                implementation("app.cash.sqldelight:runtime:2.4.1")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.4.1")
-                implementation("com.google.code.gson:gson:2.8.6")
+                api(libs.compose.runtime)
+                api(libs.compose.foundation)
+                api(libs.compose.material)
+                api(libs.lifecycle.viewmodel.compose)
+                implementation(libs.lifecycle.runtime.compose)
+                implementation(libs.compose.material.icons.core)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.sqldelight.runtime)
             }
         }
         androidMain {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
-                implementation("app.cash.sqldelight:android-driver:2.4.1")
+                implementation(libs.kotlinx.coroutines.android)
+                implementation(libs.sqldelight.android.driver)
             }
         }
         getByName("desktopMain") {
             dependencies {
-                implementation("app.cash.sqldelight:sqlite-driver:2.4.1")
+                implementation(libs.sqldelight.sqlite.driver)
             }
         }
         getByName("desktopTest") {
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

@@ -2,7 +2,7 @@ package com.flannaghan.cheetah.common.datasource
 
 import androidx.compose.ui.graphics.Color
 import com.flannaghan.cheetah.common.DesktopPlatform
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
@@ -10,7 +10,7 @@ import java.io.File
 
 internal class WordListTextFileDataSourceKtTest {
     @Test
-    fun testUKACD() = runBlocking {
+    fun testUKACD() = runTest {
         val file = File(DesktopPlatform().dataDir, "ukacd.txt")
         val defaults = DataSourceDefaults(useWordList = true, useDefinitions = true)
         val result = WordListTextFileDataSource("ukacd", file, Color.Red, defaults)

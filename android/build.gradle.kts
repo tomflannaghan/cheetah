@@ -1,28 +1,29 @@
 plugins {
-    id("com.android.application")
-    kotlin("plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 }
 
-group = "com.flannaghan.cheetah"
-version = "1.0"
+kotlin {
+    jvmToolchain(libs.versions.java.get().toInt())
+}
 
 dependencies {
     implementation(project(":common"))
-    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation(libs.androidx.activity.compose)
 }
 
 android {
     namespace = "com.flannaghan.cheetah.android"
-    compileSdk = 37
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         applicationId = "com.flannaghan.cheetah.android"
-        minSdk = 24
-        targetSdk = 36
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
     }
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
         }
     }

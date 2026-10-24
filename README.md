@@ -67,10 +67,10 @@ Here's an example showing all of the fields:
 
 Here are the definitions of the fields:
 
-- `name` - currently unused
-- `color` - currently unused
+- `name` - shown in the word list menu
+- `color` - the colour of the data source's icon
 - `type` - either `TextFileWordList` or `SqliteWordDatabase`
-- `metadata` - currently unused
+- `metadata` - optional and currently unused
 - `useWordListByDefault` - this is optional, defaulting to `true`. Selects whether we should use this data source
   as a source of words that we consider valid.
 - `useDefinitionsByDefault` - this is optional, defaulting to `true`. Selects whether we should use this data source

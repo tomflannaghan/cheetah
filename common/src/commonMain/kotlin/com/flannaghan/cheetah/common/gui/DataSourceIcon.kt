@@ -38,7 +38,7 @@ fun DataSourceIcon(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    dataSource.name.substring(0, 1), color = MaterialTheme.colors.background,
+                    dataSource.name.take(1), color = MaterialTheme.colors.background,
                     textAlign = TextAlign.Center, fontSize = textSizeDp.toSp()
                 )
             }
@@ -46,8 +46,7 @@ fun DataSourceIcon(
     }
 }
 
-@Composable
-fun toGreyscale(color: Color): Color {
+private fun toGreyscale(color: Color): Color {
     val lum = color.luminance()
-    return Color(red = lum, green = lum, blue = lum, alpha = LocalContentAlpha.current)
+    return Color(red = lum, green = lum, blue = lum)
 }

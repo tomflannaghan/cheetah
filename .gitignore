@@ -3,3 +3,4 @@ build
 /raw_data
 /data/*.sqlite
 *.hprof
+/local.properties

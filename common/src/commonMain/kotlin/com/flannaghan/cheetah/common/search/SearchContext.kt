@@ -24,7 +24,7 @@ class SearchContext(
 
     // Certain things only need persisting for the evaluation, and should be discarded once done.
     private var evaluationContext: SearchEvaluationContext? = null
-    private val evaluationLock = Mutex(false)
+    private val evaluationLock = Mutex()
 
     suspend fun <R> withEvaluation(block: suspend () -> R): R {
         // We only allow a single top level evaluation to take place at any time.
@@ -54,7 +54,7 @@ class SearchContext(
  * outermost search (i.e. the full search) and is available within any sub-searches.
  */
 internal class SearchEvaluationContext(val context: SearchContext) {
-    private var matcherSearchTrees =
+    private val matcherSearchTrees =
         DefaultDeferredMap<Pair<Matcher, Boolean>, PrefixSearchNode> { (matcher, backwards) ->
             val words = matcher.matchingWords(context)
             val strings = if (backwards) words.map { it.entry.reversed() } else words.map { it.entry }
@@ -68,10 +68,10 @@ internal class SearchEvaluationContext(val context: SearchContext) {
 
 
 internal class DefaultDeferredMap<K, V>(private val getValue: suspend (K) -> V) {
-    private var _data = mutableMapOf<K, Deferred<V>>()
+    private val data = mutableMapOf<K, Deferred<V>>()
 
     // This class is safe for insertion into the lazy map.
-    private val lock = Mutex(false)
+    private val lock = Mutex()
 
     suspend fun get(key: K): V = coroutineScope {
         getNonCancelledAsync(key)?.let { return@coroutineScope it.await() }
@@ -79,13 +79,13 @@ internal class DefaultDeferredMap<K, V>(private val getValue: suspend (K) -> V) 
             val deferred = getNonCancelledAsync(key) ?: async {
                 getValue(key)
             }
-            _data[key] = deferred
+            data[key] = deferred
             deferred
         }.await()
     }
 
     private fun getNonCancelledAsync(key: K): Deferred<V>? {
-        val deferred = _data[key]
+        val deferred = data[key]
         return if (deferred == null || deferred.isCancelled) null else deferred
     }
 }
