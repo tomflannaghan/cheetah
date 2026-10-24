@@ -65,6 +65,7 @@ Canonical forms: `stringToEntry` (`words/Word.kt`) must agree with preprocessing
 Definition text is a small wiki-like markup parsed by `DefinitionParser`:
 
 - `=word=` and `==Heading==` are headings. `DefinitionLines` styles level 3 or deeper like level 2.
+- The rest of a heading line after its closing `=` is detail. Chambers puts alternative headwords there with the same markers, e.g. `=arse [[around]]= or =[[about]]=`, and `DefinitionParser` makes them bold `Headword` spans.
 - `#`, `##`, ... are numbered list items.
 - `[[target|text]]` is a link.
 - `{{...}}` is an italic label.
